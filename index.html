@@ -129,7 +129,7 @@ footer a{color:var(--accent)}
     <a class="sosbtn" href="#sos" aria-label="Open SOS emergency help">SOS</a>
   </div>
   <nav class="tabs" aria-label="Sections">
-    <a href="#plan">Plan route</a><a href="#cost">Trip cost</a><a href="#nearby">Nearby help</a><a href="#sos">SOS</a><a href="#analytics">Analytics</a>
+    <a href="#plan">Plan route</a><a href="#cost">Trip cost</a><a href="#nearby">Nearby help</a><a href="#sos">SOS</a><a href="#analytics">Analytics</a><a href="#local">Local info</a>
   </nav>
 </div>
 
@@ -238,6 +238,22 @@ footer a{color:var(--accent)}
           <div id="sosSvc" style="margin-top:8px"></div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section id="tab-local" aria-label="Local info" hidden>
+    <div class="split">
+      <div class="stack">
+        <div class="card">
+          <h2>Local info</h2>
+          <p class="hint" style="margin-bottom:12px">Share your location to see the place name, current weather and the languages spoken there. Your location is read only after you confirm, and it is not stored or sent anywhere except the free weather and place-name services.</p>
+          <div id="lcAsk"></div>
+          <div class="field" style="margin-top:14px"><label for="lcPlace">Or type a place</label><input id="lcPlace" type="text" placeholder="e.g. Madurai, Tamil Nadu" autocomplete="off"></div>
+          <div class="row"><button class="btn pri" id="lcSearch" type="button">Show info</button><span class="hint" id="lcStatus" aria-live="polite"></span></div>
+        </div>
+        <p class="disc">Weather is from Open-Meteo and place names from OpenStreetMap. Languages are the main official and widely spoken languages of the state or union territory, not a count of speakers in one town.</p>
+      </div>
+      <div class="stack" id="lcOut" aria-live="polite"><div class="card"><p class="hint">Share your location or type a place to see details.</p></div></div>
     </div>
   </section>
 
@@ -675,8 +691,89 @@ function renderAnalytics(){
   $('#topTable').innerHTML='<thead><tr><th>#</th><th>Location</th><th class="n">Records</th><th class="n">Fatal</th><th>Peak hour</th><th>Level</th></tr></thead><tbody>'+(top.length?top.map((h,i)=>{const q=h.w/mw,lv=q>=0.6?['High','hi']:(q>=0.3?['Medium','md']:['Lower','lo']),loc=topKey(h.loc)||h.lat.toFixed(3)+', '+h.lon.toFixed(3);return `<tr><td>${i+1}</td><td>${esc(loc)}</td><td class="n">${h.n}</td><td class="n">${h.f}</td><td>${hh(+topKey(h.hr))}</td><td><span class="pill ${lv[1]}">${lv[0]}</span></td></tr>`}).join(''):'<tr><td colspan="6">No records match these filters.</td></tr>')+'</tbody>';
 }
 
+
+/* ---------- local info: location, weather, languages ---------- */
+const LANGS={
+ 'Andhra Pradesh':['Telugu','Urdu','English'],'Arunachal Pradesh':['English','Hindi','Nyishi','Adi'],'Assam':['Assamese','Bengali','Bodo','English'],
+ 'Bihar':['Hindi','Maithili','Bhojpuri','Urdu'],'Chhattisgarh':['Hindi','Chhattisgarhi'],'Goa':['Konkani','Marathi','English','Hindi'],
+ 'Gujarat':['Gujarati','Hindi','English'],'Haryana':['Hindi','Punjabi','Haryanvi'],'Himachal Pradesh':['Hindi','Pahari','Punjabi'],
+ 'Jharkhand':['Hindi','Santali','Bengali','Urdu'],'Karnataka':['Kannada','Tulu','Konkani','English'],'Kerala':['Malayalam','English','Tamil'],
+ 'Madhya Pradesh':['Hindi','Bundeli','Malvi'],'Maharashtra':['Marathi','Hindi','English','Gujarati'],'Manipur':['Meiteilon (Manipuri)','English'],
+ 'Meghalaya':['English','Khasi','Garo'],'Mizoram':['Mizo','English','Hindi'],'Nagaland':['English','Nagamese','Ao','Konyak'],
+ 'Odisha':['Odia','Hindi','English'],'Punjab':['Punjabi','Hindi','English'],'Rajasthan':['Hindi','Rajasthani','Marwari'],'Sikkim':['Nepali','Sikkimese','English','Hindi'],
+ 'Tamil Nadu':['Tamil','English','Telugu'],'Telangana':['Telugu','Urdu','Hindi','English'],'Tripura':['Bengali','Kokborok','English'],
+ 'Uttar Pradesh':['Hindi','Urdu','Awadhi','Bhojpuri'],'Uttarakhand':['Hindi','Garhwali','Kumaoni'],'West Bengal':['Bengali','Hindi','English','Nepali'],
+ 'Delhi':['Hindi','English','Punjabi','Urdu'],'NCT':['Hindi','English','Punjabi','Urdu'],'Jammu and Kashmir':['Kashmiri','Urdu','Dogri','Hindi'],'Ladakh':['Ladakhi','Hindi','Balti'],
+ 'Puducherry':['Tamil','French','English','Telugu','Malayalam'],'Chandigarh':['Hindi','Punjabi','English'],'Andaman and Nicobar Islands':['Hindi','Bengali','Tamil','English'],
+ 'Lakshadweep':['Malayalam','Mahl'],'Dadra and Nagar Haveli and Daman and Diu':['Gujarati','Hindi','Konkani']
+};
+function langsFor(state){
+  if(!state)return null;
+  const k=Object.keys(LANGS).find(x=>state.toLowerCase().indexOf(x.toLowerCase())>=0);
+  return k?{state:k,list:LANGS[k]}:null;
+}
+const WCODE={0:'Clear sky',1:'Mostly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',66:'Freezing rain',67:'Freezing rain',71:'Light snow',73:'Snow',75:'Heavy snow',77:'Snow grains',80:'Rain showers',81:'Rain showers',82:'Heavy rain showers',85:'Snow showers',86:'Snow showers',95:'Thunderstorm',96:'Thunderstorm with hail',99:'Thunderstorm with hail'};
+function compass(d){return ['N','NE','E','SE','S','SW','W','NW'][Math.round(d/45)%8]}
+async function reversePlace(lat,lon){
+  try{
+    const j=await fetchJSON('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&addressdetails=1&lat='+lat+'&lon='+lon,{headers:{'Accept':'application/json'}});
+    const a=j.address||{};
+    return {name:a.city||a.town||a.village||a.county||a.state_district||j.name||'Your location',state:a.state||a.state_district||'',country:a.country||''};
+  }catch(e){return {name:'Your location',state:'',country:''}}
+}
+async function showLocal(c){
+  const out=$('#lcOut'),st=$('#lcStatus');
+  out.innerHTML='<div class="card"><p class="hint">Loading weather and place details…</p></div>';
+  let w=null,wErr=false,place=c.state!=null?c:null;
+  try{
+    const url='https://api.open-meteo.com/v1/forecast?latitude='+c.lat+'&longitude='+c.lon+'&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1';
+    w=await fetchJSON(url);
+  }catch(e){wErr=true}
+  if(!place)place=await reversePlace(c.lat,c.lon);
+  const lg=langsFor(place.state);
+  let wh;
+  if(w&&w.current){
+    const cu=w.current,d=w.daily||{};
+    wh=`<div class="card"><h2>Weather now</h2><div class="big">${Math.round(cu.temperature_2m)}°C</div><p style="margin-top:6px">${esc(WCODE[cu.weather_code]||'Weather data')}</p>
+    <dl class="kv"><dt>Feels like</dt><dd>${Math.round(cu.apparent_temperature)}°C</dd><dt>Humidity</dt><dd>${Math.round(cu.relative_humidity_2m)}%</dd><dt>Wind</dt><dd>${Math.round(cu.wind_speed_10m)} km/h ${compass(cu.wind_direction_10m)}</dd><dt>Rain now</dt><dd>${cu.precipitation} mm</dd>${d.temperature_2m_max?`<dt>Today</dt><dd>${Math.round(d.temperature_2m_min[0])}° to ${Math.round(d.temperature_2m_max[0])}°C</dd>`:''}${d.precipitation_probability_max?`<dt>Chance of rain</dt><dd>${d.precipitation_probability_max[0]}%</dd>`:''}</dl>
+    <p class="small">Rain, fog and low visibility raise road risk. Drive slowly and keep your distance.</p></div>`;
+  }else wh=`<div class="card"><h2>Weather now</h2><p class="err">${wErr?'The weather service did not respond. Try again in a moment.':'No weather data returned.'}</p></div>`;
+  const lh=`<div class="card"><h2>Languages spoken</h2>${lg?`<div class="chips" style="margin-bottom:8px">${lg.list.map(x=>`<span class="chip" style="cursor:default">${esc(x)}</span>`).join('')}</div><p class="small">Main languages of ${esc(lg.state)}. Many people also speak Hindi or English.</p>`:`<p class="hint">Language information is available for Indian states and union territories. ${place.country?esc(place.country)+' is outside the list.':'This place could not be matched to a state.'}</p>`}</div>`;
+  const pl=`<div class="card"><h2>${esc(place.name)}</h2><p class="hint">${[place.state,place.country].filter(Boolean).map(esc).join(', ')||'Place name not available'}</p><dl class="kv"><dt>Latitude</dt><dd>${(+c.lat).toFixed(4)}</dd><dt>Longitude</dt><dd>${(+c.lon).toFixed(4)}</dd></dl></div>`;
+  out.innerHTML=pl+wh+lh;
+  st.textContent='';
+}
+function initLocal(){
+  const ask=$('#lcAsk');
+  function idle(){ask.innerHTML='<button class="btn pri" id="lcShare" type="button">Share my location</button>';$('#lcShare').onclick=confirmStep}
+  function confirmStep(){
+    ask.innerHTML='<div class="disc"><p style="margin-bottom:10px"><b>Allow this page to read your location once?</b></p><div class="row"><button class="btn pri sm" id="lcYes" type="button">Yes, read my location</button><button class="btn sm" id="lcNo" type="button">Cancel</button></div></div>';
+    $('#lcNo').onclick=idle;
+    $('#lcYes').onclick=()=>{
+      ask.innerHTML='<p class="hint">Reading location…</p>';
+      if(!navigator.geolocation){ask.innerHTML='<p class="err">Location is not available on this device. Type a place below.</p>';return}
+      navigator.geolocation.getCurrentPosition(p=>{idle();showLocal({lat:p.coords.latitude,lon:p.coords.longitude})},()=>{ask.innerHTML='<p class="err">Location could not be read. Allow location for this site in your browser, or type a place below.</p><div style="margin-top:8px"><button class="btn sm" id="lcRetry" type="button">Try again</button></div>';$('#lcRetry').onclick=idle},{timeout:12000,maximumAge:0});
+    };
+  }
+  idle();
+  async function byName(){
+    const q=$('#lcPlace').value.trim(),st=$('#lcStatus'),b=$('#lcSearch');
+    if(!q){st.className='err';st.textContent='Type a place first.';return}
+    b.disabled=true;st.className='hint';st.textContent='Finding place…';
+    try{
+      const g=await geocode(q);
+      let state='',country='India';
+      try{const r=await reversePlace(g.lat,g.lon);state=r.state;country=r.country||country}catch(e){}
+      await showLocal({lat:g.lat,lon:g.lon,name:g.name,state:state,country:country});
+    }catch(e){st.className='err';st.textContent=e.message}
+    b.disabled=false;
+  }
+  $('#lcSearch').addEventListener('click',byName);
+  $('#lcPlace').addEventListener('keydown',e=>{if(e.key==='Enter')byName()});
+}
+
 /* ---------- tabs and boot ---------- */
-const TABS=['plan','cost','nearby','sos','analytics'];
+const TABS=['plan','cost','nearby','sos','local','analytics'];
 function showTab(){
   let h=location.hash.slice(1);if(!TABS.includes(h))h='plan';
   TABS.forEach(t=>$('#tab-'+t).hidden=t!==h);
@@ -685,7 +782,7 @@ function showTab(){
   window.scrollTo(0,0);
 }
 function renderAll(){renderRoutes();drawMap();renderCost();renderWhere();hotIntro()}
-initMap();initCost();initNearby();initSos();initAnalytics();banner();renderAll();renderAnalytics();
+initMap();initCost();initNearby();initSos();initLocal();initAnalytics();banner();renderAll();renderAnalytics();
 $('#go').addEventListener('click',findRoutes);
 ['#fromQ','#toQ'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')findRoutes()}));
 addEventListener('hashchange',showTab);showTab();
