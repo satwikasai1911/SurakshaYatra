@@ -1,158 +1,697 @@
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SafeRoute AI</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Suraksha Yatra</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap">
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;color:#222}
-header{background:#1F3A5F;color:#fff;padding:14px 16px}header h1{margin:0;font-size:22px}header p{margin:4px 0 0;font-size:13px;opacity:.9}
-.wrap{max-width:1000px;margin:0 auto;padding:12px}
-.banner{background:#fff3cd;border:1px solid #e0c36a;border-radius:8px;padding:10px;font-size:13px;margin-bottom:12px}
-.row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end}
-label{font-size:13px;font-weight:bold;display:block;margin-bottom:3px}
-input,select{padding:9px;font-size:14px;border-radius:6px;border:1px solid #b8c4d4;min-width:200px;background:#fff}
-button{padding:10px 18px;font-size:14px;border:0;border-radius:6px;background:#1F3A5F;color:#fff;cursor:pointer}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.stat,.card{background:#fff;border:1px solid #dde4ee;border-radius:8px;padding:10px}
-.stat span{display:block;font-size:12px;color:#666}.stat b{font-size:16px;color:#1F3A5F}
-#map{height:55vh;min-height:320px;border-radius:8px;border:1px solid #b8c4d4;background:#eef3f9}
-h2{font-size:17px;color:#1F3A5F;margin:18px 0 8px}
-.route{background:#fff;border:1px solid #dde4ee;border-left:6px solid #888;border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
-.route.sel{box-shadow:0 0 0 2px #1F3A5F}.route h3{margin:0 0 4px;font-size:15px}.route p{margin:3px 0;font-size:13px}
-.tag{font-size:11px;padding:2px 7px;border-radius:10px;color:#fff}.good{background:#2a9d8f}.bad{background:#d7263d}
-.warn{color:#b3261e}.ok{color:#2a7a43}
-.reco{background:#e8f4ee;border:1px solid #a9d3b8;border-radius:8px;padding:10px;font-size:14px;margin-bottom:8px}
-#msg{font-size:13px;margin-bottom:8px;color:#1F3A5F}
-table{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
-th,td{padding:7px 6px;border-bottom:1px solid #e5eaf2;text-align:left}th{background:#1F3A5F;color:#fff}
-.badge{padding:2px 8px;border-radius:10px;color:#fff;font-size:11px}.scroll{overflow-x:auto}
-#chart{display:flex;align-items:flex-end;gap:3px;height:140px}
-.col{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
-.bar{width:100%;background:#7aa2d6;min-height:1px}.bar.peak{background:#d7263d}.lbl{font-size:10px;color:#666;height:14px}
-.note{font-size:12px;color:#666;margin:6px 0 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
-.grid h3{margin:0 0 6px;font-size:14px}.grid p{margin:3px 0;font-size:12px}
-.em a{display:inline-block;margin:3px 6px 3px 0;padding:8px 12px;background:#d7263d;color:#fff;border-radius:6px;text-decoration:none;font-size:14px}
-li{margin-bottom:5px;font-size:14px}
-</style></head><body>
-<header><h1>SafeRoute AI</h1><p>Accident hotspots, safer routes and emergency help &middot; Team Abhinava, SCSVMV</p></header>
-<div class="wrap">
-<div class="banner"><b>Prototype with SAMPLE accident data</b> (made-up, Kanchipuram-Chennai area only). Routes, travel times and nearby places come from live OpenStreetMap services, so internet is needed. Travel time is an average without live traffic.</div>
-<div class="row">
- <div><label for="from">Starting place</label><input id="from" value="Kanchipuram"></div>
- <div><label for="to">Destination</label><input id="to" value="Guindy, Chennai"></div>
- <button id="go">Find safer route</button>
+:root{
+  --bg:#EDF0F2; --surface:#FFFFFF; --surface2:#E2E8EC; --ink:#13222B; --muted:#4F626E; --line:#C9D3D9;
+  --accent:#0B5CAD; --accent-ink:#FFFFFF; --mile:#F2B705; --low:#23804F; --mid:#C98200; --high:#C5352B; --sos:#C5352B;
+  --display:'Barlow Semi Condensed','Arial Narrow',Arial,sans-serif; --body:'Public Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0E161B; --surface:#16222A; --surface2:#1F2E37; --ink:#E7EEF2; --muted:#9FB2BD; --line:#2B3C46;
+  --accent:#5AA7F0; --accent-ink:#08131B; --mile:#F2C230; --low:#4CC38A; --mid:#F0B040; --high:#FF7468; color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px))}
+h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0;text-wrap:balance}
+h2{font-size:22px;font-weight:700;letter-spacing:.01em}
+h3{font-size:17px;font-weight:600}
+p{margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding-top:14px}
+.top{position:sticky;top:0;z-index:1000;background:var(--bg);border-bottom:1px solid var(--line);padding-top:10px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1040px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;font:700 24px/1 var(--display)}
+.stone{width:26px;height:30px;background:var(--mile);border-radius:13px 13px 3px 3px;display:grid;place-items:end center;padding-bottom:3px;color:#1B1500;font:600 10px var(--mono)}
+.sosbtn{background:var(--sos);color:#fff;border-radius:8px;padding:8px 16px;font:700 17px/1.2 var(--display);letter-spacing:.08em;text-decoration:none;min-height:40px;display:inline-flex;align-items:center}
+.tabs{display:flex;gap:2px;overflow-x:auto;max-width:1040px;margin:6px auto 0;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{flex:0 0 auto;padding:10px 14px;font:600 17px/1 var(--display);letter-spacing:.02em;color:var(--muted);text-decoration:none;border-bottom:3px solid transparent;min-height:44px;display:flex;align-items:center}
+.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
+.note{font-size:13.5px;color:var(--muted);background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:16px}
+.note b{color:var(--ink)}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.split{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+@media (min-width:880px){.split{grid-template-columns:minmax(0,380px) minmax(0,1fr)}.split.even{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.card>h2{margin-bottom:12px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+label,.lbl{font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+select,input[type=number],input[type=text],input[type=file]{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hint{font-size:13px;color:var(--muted)}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.sos{background:var(--sos);color:#fff;border-color:transparent}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px}
+.btn[disabled]{opacity:.6;cursor:wait}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.grid3{grid-template-columns:minmax(0,1fr)}}
+.route{display:block;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:14px;cursor:pointer;position:relative}
+.route input{position:absolute;opacity:0;pointer-events:none}
+.route:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.route:has(input:focus-visible){outline:3px solid var(--accent);outline-offset:2px}
+.rhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.rname{font:700 20px var(--display)}
+.badge{font:600 12px/1 var(--body);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:6px;background:var(--low);color:#fff}
+@media (prefers-color-scheme: dark){.badge{color:#06140D}}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.stats b{display:block;font:600 19px/1.2 var(--display);font-variant-numeric:tabular-nums}
+.stats span span{font-size:12px;color:var(--muted)}
+.rl{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:5px}
+.meter{display:block;height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.meter i{display:block;height:100%;border-radius:4px}
+.lo{color:var(--low)}.md{color:var(--mid)}.hi{color:var(--high)}
+.fl-lo{background:var(--low)}.fl-md{background:var(--mid)}.fl-hi{background:var(--high)}
+.small{font-size:12.5px;color:var(--muted);display:block;margin-top:6px}
+#map{height:430px;border-radius:8px;border:1px solid var(--line);z-index:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.disc{font-size:13px;border:1px dashed var(--line);border-radius:8px;padding:10px 12px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px;margin:10px 0 0}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font-variant-numeric:tabular-nums}
+.big{font:700 40px/1 var(--display);font-variant-numeric:tabular-nums}
+.brk{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin-top:12px;font-size:14.5px}
+.brk .v{text-align:right;font-family:var(--mono);font-size:14px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.n,th.n{text-align:right}
+tr.sel td{background:var(--surface2);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 14px var(--body);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.svc{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line)}
+.svc:last-child{border-bottom:0}
+.ic{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;font:700 16px var(--display);color:#fff}
+.t-hospital{background:#C5352B}.t-medical{background:#23804F}.t-police{background:#0B5CAD}.t-petrol{background:#8A5A00}.t-tyre{background:#4F626E}
+.svc b{display:block}
+.svc .d{font-family:var(--mono);font-size:13px;color:var(--muted);white-space:nowrap}
+.svc a{color:var(--accent)}
+.num{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.num:last-child{border-bottom:0}
+.num .n112{font:700 34px/1 var(--display);color:var(--sos);min-width:74px;font-variant-numeric:tabular-nums}
+.num .cf{grid-column:1/-1;background:var(--surface2);border-radius:8px;padding:12px}
+.msgbox{font-family:var(--mono);font-size:13.5px;background:var(--surface2);border-radius:8px;padding:12px;white-space:pre-wrap;word-break:break-word;user-select:all}
+.check{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.check:last-child{border-bottom:0}
+.check input{width:22px;height:22px;margin-top:2px;flex:0 0 auto;accent-color:var(--accent)}
+.check input:checked+span{color:var(--muted);text-decoration:line-through}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.kpis .card{padding:12px 14px}
+.kpis b{display:block;font:700 28px/1.1 var(--display)}
+.kpis span{font-size:12.5px;color:var(--muted)}
+.chart text{fill:var(--muted);font:11px var(--mono)}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;color:#fff}
+.pill.hi{background:var(--high)}.pill.md{background:var(--mid);color:#1B1200}.pill.lo{background:var(--low)}
+@media (prefers-color-scheme: dark){.pill.hi,.pill.lo{color:#06100A}}
+.err{color:var(--high);font-size:14px}
+footer{margin-top:28px;font-size:13px;color:var(--muted);display:grid;gap:8px}
+footer h3{color:var(--ink)}
+footer a{color:var(--accent)}
+.leaflet-container{font-family:var(--body)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="bar">
+    <div class="brand"><span class="stone" aria-hidden="true">km</span>Suraksha Yatra</div>
+    <a class="sosbtn" href="#sos" aria-label="Open SOS emergency help">SOS</a>
+  </div>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#plan">Plan route</a><a href="#cost">Trip cost</a><a href="#nearby">Nearby help</a><a href="#sos">SOS</a><a href="#analytics">Analytics</a>
+  </nav>
 </div>
-<div class="row">
- <div><label for="timeSel">Time of day</label><select id="timeSel"></select></div>
- <div><label for="vehSel">Vehicle type</label><select id="vehSel"></select></div>
-</div>
-<div id="msg"></div>
-<div class="stats">
- <div class="stat"><span>Accidents in this view</span><b id="sTotal">-</b></div>
- <div class="stat"><span>Most dangerous area</span><b id="sArea">-</b></div>
- <div class="stat"><span>Peak hour</span><b id="sHour">-</b></div>
-</div>
-<div id="map"></div>
-<p class="note">Circles: <span style="color:#d7263d">red = high</span>, <span style="color:#f4a259">orange = medium</span>, <span style="color:#2a9d8f">green = low</span> risk hotspots. &#127973; hospital &#128138; medical store &#128659; police &#9981; petrol bunk &#128295; tyre/mechanic</p>
 
-<h2>Compare routes (tap a route to see help along it)</h2>
-<div class="reco" id="reco">Press "Find safer route".</div><div id="routes"></div>
-<p class="note">Risk score = accidents per 10 km, counting accidents within 1.5 km of the route.</p>
+<main class="wrap">
+  <p class="note" id="banner"></p>
 
-<h2>Nearby help along the selected route</h2><div class="grid" id="svc"><div class="card">Choose a route to load nearby places.</div></div>
-<p class="note">Phone numbers appear only where OpenStreetMap has them.</p>
+  <section id="tab-plan" aria-label="Plan route">
+    <div class="split">
+      <div class="stack">
+        <div class="card">
+          <h2>Plan a trip</h2>
+          <div class="field"><label for="fromQ">From</label><input id="fromQ" type="text" value="Chennai" autocomplete="off"></div>
+          <div class="field"><label for="toQ">To</label><input id="toQ" type="text" value="Bengaluru" autocomplete="off"></div>
+          <div class="field"><label for="vehPlan">Vehicle for cost estimate</label><select id="vehPlan"></select></div>
+          <div class="row"><button class="btn pri" id="go" type="button">Find routes</button><span class="hint" id="status" aria-live="polite"></span></div>
+        </div>
+        <div id="routes" class="stack" role="radiogroup" aria-label="Available routes"></div>
+        <div id="reco" class="card" aria-live="polite" hidden></div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <h2>Routes and accident hotspots</h2>
+          <div id="map" role="application" aria-label="Interactive map of routes and accident hotspots"></div>
+          <div class="legend">
+            <span><i class="dot" style="background:var(--high)"></i>High</span>
+            <span><i class="dot" style="background:var(--mid)"></i>Medium</span>
+            <span><i class="dot" style="background:var(--low)"></i>Lower</span>
+            <span>Hotspot colours rank clusters inside the map area. Tap a circle for details.</span>
+          </div>
+        </div>
+        <div id="hotdetail" class="card" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
 
-<h2>Emergency contacts</h2>
-<div class="card em"><a href="tel:112">112 Emergency</a><a href="tel:108">108 Ambulance</a><a href="tel:100">100 Police</a><a href="tel:101">101 Fire</a><a href="tel:1033">1033 Highway helpline</a></div>
+  <section id="tab-cost" aria-label="Trip cost" hidden>
+    <div class="split">
+      <div class="stack">
+        <div class="card">
+          <h2>Trip cost estimate</h2>
+          <div class="field"><label for="costRoute">Route</label><select id="costRoute"></select></div>
+          <div class="grid2">
+            <div class="field"><label for="dist">Distance (km)</label><input id="dist" type="number" min="1" step="1" inputmode="decimal" value="350"></div>
+            <div class="field"><label for="tollShare">Tolled share of route %</label><input id="tollShare" type="number" min="0" max="100" step="5" inputmode="decimal" value="50"></div>
+          </div>
+          <div class="field"><label for="veh">Vehicle type</label><select id="veh"></select></div>
+          <div class="grid2">
+            <div class="field"><label for="eff" id="effL">Mileage</label><input id="eff" type="number" min="0.1" step="0.1" inputmode="decimal"></div>
+            <div class="field"><label for="tollRate">Toll ₹ per km</label><input id="tollRate" type="number" min="0" step="0.1" inputmode="decimal"></div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label for="pPetrol">Petrol ₹/l</label><input id="pPetrol" type="number" min="0" step="0.5" inputmode="decimal"></div>
+            <div class="field"><label for="pDiesel">Diesel ₹/l</label><input id="pDiesel" type="number" min="0" step="0.5" inputmode="decimal"></div>
+            <div class="field"><label for="pElec">Power ₹/kWh</label><input id="pElec" type="number" min="0" step="0.5" inputmode="decimal"></div>
+          </div>
+          <p class="hint">Prices and toll rates are editable assumptions. Enter today's local figures for a closer estimate.</p>
+        </div>
+        <div class="card" id="costOut" aria-live="polite"></div>
+      </div>
+      <div class="card">
+        <h2>All vehicle types, same trip</h2>
+        <div class="tw"><table id="costTable"></table></div>
+        <p class="small">Toll = distance × tolled share × rate per km. Two- and three-wheelers are set to ₹0 as an assumption. Real plaza charges differ by plaza, vehicle class and pass.</p>
+      </div>
+    </div>
+  </section>
 
-<h2>What to do in an emergency</h2>
-<div class="card"><ol>
-<li>Stop in a safe place, switch on hazard lights, place a reflective triangle behind the vehicle.</li>
-<li>Call 112 or 108. Give your exact location (landmark, road name, nearest town).</li>
-<li>Do not move an injured person unless there is fire or danger. Press firmly on heavy bleeding.</li>
-<li>Keep with you: first aid kit, torch, power bank, spare tyre and jack, water, vehicle papers and insurance details.</li>
-<li>Note the vehicle numbers, take photos, and inform the police and your insurer.</li></ol></div>
+  <section id="tab-nearby" aria-label="Nearby help" hidden>
+    <div class="split">
+      <div class="stack">
+        <div class="card">
+          <h2>Find help nearby</h2>
+          <div class="field"><label for="svcWhere">Search around</label><select id="svcWhere"></select></div>
+          <div class="field"><label for="svcR">Radius</label><select id="svcR"><option value="3000">3 km</option><option value="5000" selected>5 km</option><option value="10000">10 km</option></select></div>
+          <div class="lbl" style="margin-bottom:8px">Show</div>
+          <div class="chips" id="types" role="group" aria-label="Service types"></div>
+          <div class="row" style="margin-top:14px"><button class="btn pri" id="svcGo" type="button">Search</button></div>
+          <div id="svcLoc" style="margin-top:12px"></div>
+        </div>
+        <p class="disc">Places come from OpenStreetMap. A phone number is shown only when the map data lists one. Many places have none, so call 112 in an emergency.</p>
+      </div>
+      <div class="card"><h2 id="svcTitle">Services</h2><div id="svcList"><p class="hint">Choose where to search and press Search.</p></div></div>
+    </div>
+  </section>
 
-<h2>Top 10 most dangerous areas</h2>
-<div class="scroll"><table><thead><tr><th>#</th><th>Area</th><th>Accidents</th><th>Fatal</th><th>Risk</th></tr></thead><tbody id="top"></tbody></table></div>
+  <section id="tab-sos" aria-label="SOS emergency help" hidden>
+    <div class="split even">
+      <div class="stack">
+        <div class="card">
+          <h2>Emergency numbers</h2>
+          <div id="nums"></div>
+          <p class="small">Nothing is dialled until you confirm. If your dialer does not open, dial the number by hand.</p>
+        </div>
+        <div class="card"><h2>Share my location</h2><div id="locBox"></div></div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <h2>Basic emergency checklist</h2>
+          <div id="checks"></div>
+          <p class="small">General guidance only. Follow the instructions of emergency operators and trained responders.</p>
+        </div>
+        <div class="card">
+          <h2>Nearest hospital and police</h2>
+          <div class="field"><label for="sosWhere">Near</label><select id="sosWhere"></select></div>
+          <div class="row"><button class="btn pri sm" id="sosGo" type="button">Find nearby</button></div>
+          <div id="sosSvc" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<h2>Accidents by hour of day</h2>
-<div class="card"><div id="chart"></div><p class="note">Hours 0-23. Red bar = peak hour.</p></div>
-</div>
+  <section id="tab-analytics" aria-label="Accident analytics" hidden>
+    <div class="stack">
+      <div class="card">
+        <h2>Accident analytics</h2>
+        <div class="grid3">
+          <div class="field"><label for="aCorr">City</label><select id="aCorr"></select></div>
+          <div class="field"><label for="aTod">Time of day</label><select id="aTod"></select></div>
+          <div class="field"><label for="aVeh">Vehicle type</label><select id="aVeh"></select></div>
+        </div>
+        <div class="field" style="margin-top:4px"><label for="csv">Load your own accident CSV</label><input id="csv" type="file" accept=".csv,text/csv"></div>
+        <p class="hint" id="csvMsg">Columns: lat, lon, hour or time, severity, vehicle, road_type, city, location. See README for details.</p>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="split even">
+        <div class="card"><h3 style="margin-bottom:8px">Accidents by hour of day</h3><svg id="hourChart" class="chart" viewBox="0 0 480 220" role="img" aria-label="Bar chart of accidents by hour" style="width:100%;height:auto"></svg></div>
+        <div class="card"><h3 style="margin-bottom:8px">Accidents by road type</h3><svg id="roadChart" class="chart" viewBox="0 0 480 220" role="img" aria-label="Bar chart of accidents by road type" style="width:100%;height:auto"></svg></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:8px">Top 10 accident-prone locations</h3>
+        <div class="tw"><table id="topTable"></table></div>
+        <p class="small">Locations are 5 km grid clusters of the loaded records.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <h3>About the data and method</h3>
+    <p><b>Maps and places.</b> Map tiles © <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> and contributors. Place search and nearby places © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>. Routes come from the public OSRM demo server, which is meant for light use.</p>
+    <p><b>Accident data.</b> The page uses a CSV of real records when one is loaded. Without one it shows clearly labelled generated samples. Starting points for real data: <a href="https://data.gov.in/resource/states-wise-list-top-ten-black-spots-2016-2018" target="_blank" rel="noopener">state-wise top ten black spots (data.gov.in)</a> and the MoRTH report "Road Accidents in India".</p>
+    <p><b>Risk score.</b> Records within 2.5 km of a route are counted with weights (minor 1, grievous 2, fatal 3), divided by route length and mapped to 0–100. It compares routes against each other. It is indicative and does not guarantee safety.</p>
+    <p><b>Time.</b> Estimated average driving time from the routing service. It is not live traffic.</p>
+  </footer>
+</main>
+
 <script>
+function loadLeaflet(done){
+  var urls=['https://unpkg.com/leaflet@1.9.4/dist/leaflet.js','https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'],i=0;
+  (function next(){
+    if(window.L||i>=urls.length){done();return}
+    var s=document.createElement('script');s.src=urls[i++];s.onload=function(){done()};s.onerror=next;document.head.appendChild(s);
+  })();
+}
+loadLeaflet(function(){
 (function(){
-var D=[[13.0683, 80.19124, 22, "Koyambedu", "Two-wheeler", "Fatal"], [12.94963, 80.14372, 20, "Chromepet", "Two-wheeler", "Minor"], [12.92478, 80.10278, 13, "Tambaram", "Auto-rickshaw", "Serious"], [13.06203, 80.19386, 23, "Koyambedu", "Car", "Minor"], [12.94153, 80.14405, 16, "Chromepet", "Car", "Minor"], [12.96809, 80.14519, 8, "Pallavaram", "Car", "Minor"], [13.01024, 80.21827, 0, "Guindy (Kathipara)", "Two-wheeler", "Fatal"], [12.8921, 80.08644, 20, "Vandalur", "Two-wheeler", "Minor"], [12.8998, 80.08405, 21, "Vandalur", "Two-wheeler", "Minor"], [13.00943, 80.22033, 7, "Guindy (Kathipara)", "Auto-rickshaw", "Serious"], [13.06755, 80.19531, 18, "Koyambedu", "Two-wheeler", "Minor"], [12.97208, 80.14381, 4, "Pallavaram", "Car", "Minor"], [12.96711, 79.94693, 18, "Sriperumbudur", "Auto-rickshaw", "Fatal"], [12.89789, 80.07929, 7, "Vandalur", "Car", "Minor"], [12.82974, 79.70355, 18, "Kanchipuram", "Two-wheeler", "Minor"], [12.95427, 80.14484, 21, "Chromepet", "Two-wheeler", "Serious"], [12.95299, 80.13945, 10, "Chromepet", "Auto-rickshaw", "Serious"], [12.97648, 80.14577, 16, "Pallavaram", "Car", "Serious"], [13.00588, 80.22341, 16, "Guindy (Kathipara)", "Two-wheeler", "Fatal"], [12.94738, 80.14724, 19, "Chromepet", "Two-wheeler", "Serious"], [12.94924, 80.14573, 18, "Chromepet", "Car", "Minor"], [12.92829, 80.09302, 10, "Tambaram", "Auto-rickshaw", "Serious"], [13.00055, 80.2256, 8, "Guindy (Kathipara)", "Auto-rickshaw", "Minor"], [12.8879, 80.08539, 22, "Vandalur", "Two-wheeler", "Fatal"], [12.96239, 80.15413, 22, "Pallavaram", "Car", "Fatal"], [12.92359, 80.09776, 20, "Tambaram", "Car", "Fatal"], [13.00119, 80.21737, 11, "Guindy (Kathipara)", "Two-wheeler", "Fatal"], [12.96445, 79.94753, 5, "Sriperumbudur", "Car", "Serious"], [13.00964, 80.22051, 23, "Guindy (Kathipara)", "Car", "Minor"], [12.95103, 80.14177, 12, "Chromepet", "Car", "Minor"], [12.83406, 79.70184, 20, "Kanchipuram", "Auto-rickshaw", "Minor"], [12.95169, 80.15091, 0, "Chromepet", "Two-wheeler", "Serious"], [12.9554, 80.15007, 17, "Chromepet", "Two-wheeler", "Minor"], [12.84669, 79.95418, 17, "Oragadam", "Car", "Minor"], [12.89529, 80.08852, 1, "Vandalur", "Truck/Bus", "Minor"], [13.00264, 80.22055, 9, "Guindy (Kathipara)", "Truck/Bus", "Minor"], [12.96768, 79.94092, 20, "Sriperumbudur", "Truck/Bus", "Minor"], [12.88791, 80.07443, 18, "Vandalur", "Car", "Serious"], [12.96487, 79.9379, 20, "Sriperumbudur", "Truck/Bus", "Fatal"], [12.92626, 80.1081, 0, "Tambaram", "Car", "Fatal"], [13.0009, 80.21876, 8, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.95622, 80.14611, 18, "Chromepet", "Two-wheeler", "Minor"], [12.92216, 80.09788, 8, "Tambaram", "Two-wheeler", "Serious"], [12.89632, 80.08163, 9, "Vandalur", "Two-wheeler", "Minor"], [12.95381, 80.14706, 2, "Chromepet", "Two-wheeler", "Serious"], [13.06432, 80.19425, 7, "Koyambedu", "Two-wheeler", "Serious"], [12.94975, 80.14929, 19, "Chromepet", "Car", "Minor"], [12.95193, 80.14189, 16, "Chromepet", "Two-wheeler", "Minor"], [12.90518, 80.09582, 22, "Perungalathur", "Truck/Bus", "Serious"], [12.90906, 80.09337, 23, "Perungalathur", "Truck/Bus", "Minor"], [13.06859, 80.19502, 7, "Koyambedu", "Car", "Minor"], [13.00416, 80.22701, 12, "Guindy (Kathipara)", "Car", "Minor"], [12.89153, 80.08449, 19, "Vandalur", "Auto-rickshaw", "Minor"], [12.94523, 80.14526, 19, "Chromepet", "Car", "Serious"], [12.82871, 79.7097, 6, "Kanchipuram", "Two-wheeler", "Minor"], [12.89179, 80.07703, 13, "Vandalur", "Auto-rickshaw", "Minor"], [13.04312, 80.09578, 1, "Poonamallee", "Two-wheeler", "Minor"], [12.90953, 80.0958, 14, "Perungalathur", "Truck/Bus", "Fatal"], [12.92253, 80.09459, 11, "Tambaram", "Car", "Minor"], [12.92148, 80.09798, 21, "Tambaram", "Car", "Minor"], [12.8906, 80.08084, 8, "Vandalur", "Car", "Minor"], [13.04967, 80.09472, 21, "Poonamallee", "Two-wheeler", "Fatal"], [12.84642, 79.95882, 8, "Oragadam", "Car", "Minor"], [12.83675, 79.71263, 1, "Kanchipuram", "Two-wheeler", "Minor"], [12.96679, 80.14449, 21, "Pallavaram", "Truck/Bus", "Serious"], [12.97184, 79.94, 18, "Sriperumbudur", "Two-wheeler", "Serious"], [12.9197, 80.09422, 22, "Tambaram", "Auto-rickshaw", "Minor"], [12.88487, 80.07786, 3, "Vandalur", "Truck/Bus", "Minor"], [13.04814, 80.08965, 19, "Poonamallee", "Two-wheeler", "Minor"], [12.91059, 80.09209, 20, "Perungalathur", "Two-wheeler", "Serious"], [13.05745, 80.0938, 1, "Poonamallee", "Auto-rickshaw", "Minor"], [12.96597, 80.15304, 19, "Pallavaram", "Two-wheeler", "Serious"], [12.88979, 80.07916, 22, "Vandalur", "Car", "Serious"], [12.94749, 80.14104, 17, "Chromepet", "Truck/Bus", "Minor"], [12.9649, 80.14519, 19, "Pallavaram", "Truck/Bus", "Minor"], [13.07095, 80.19389, 20, "Koyambedu", "Two-wheeler", "Serious"], [12.96731, 80.14476, 19, "Pallavaram", "Truck/Bus", "Minor"], [13.00654, 80.21371, 20, "Guindy (Kathipara)", "Truck/Bus", "Minor"], [12.90554, 80.09412, 0, "Perungalathur", "Car", "Serious"], [13.07092, 80.19157, 18, "Koyambedu", "Two-wheeler", "Minor"], [13.00281, 80.21575, 13, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [12.84288, 79.95664, 22, "Oragadam", "Truck/Bus", "Minor"], [13.06535, 80.18946, 2, "Koyambedu", "Two-wheeler", "Serious"], [12.96608, 79.94746, 14, "Sriperumbudur", "Two-wheeler", "Minor"], [12.92059, 80.09886, 9, "Tambaram", "Two-wheeler", "Serious"], [13.04569, 80.09102, 13, "Poonamallee", "Two-wheeler", "Serious"], [13.00632, 80.21611, 18, "Guindy (Kathipara)", "Car", "Serious"], [12.92435, 80.09693, 23, "Tambaram", "Two-wheeler", "Minor"], [12.96333, 80.15152, 19, "Pallavaram", "Two-wheeler", "Minor"], [13.04351, 80.09355, 15, "Poonamallee", "Car", "Serious"], [12.90547, 80.08433, 9, "Perungalathur", "Two-wheeler", "Minor"], [12.9681, 80.14847, 18, "Pallavaram", "Two-wheeler", "Minor"], [12.84079, 79.95637, 0, "Oragadam", "Two-wheeler", "Minor"], [12.96693, 80.14734, 7, "Pallavaram", "Two-wheeler", "Serious"], [12.96863, 80.15063, 12, "Pallavaram", "Auto-rickshaw", "Fatal"], [13.07023, 80.18874, 1, "Koyambedu", "Truck/Bus", "Minor"], [12.83677, 79.95977, 22, "Oragadam", "Two-wheeler", "Serious"], [12.82901, 79.70106, 23, "Kanchipuram", "Car", "Serious"], [12.84938, 79.95559, 18, "Oragadam", "Two-wheeler", "Serious"], [12.90678, 80.09014, 12, "Perungalathur", "Two-wheeler", "Minor"], [12.95394, 80.15048, 7, "Chromepet", "Auto-rickshaw", "Minor"], [12.82764, 79.70592, 18, "Kanchipuram", "Two-wheeler", "Serious"], [12.9225, 80.09654, 6, "Tambaram", "Two-wheeler", "Minor"], [12.8406, 79.95594, 8, "Oragadam", "Truck/Bus", "Minor"], [12.89453, 80.0878, 0, "Vandalur", "Two-wheeler", "Minor"], [13.04514, 80.09434, 18, "Poonamallee", "Two-wheeler", "Fatal"], [13.00749, 80.22597, 19, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [12.90441, 80.09285, 11, "Perungalathur", "Car", "Minor"], [12.90257, 80.08361, 8, "Perungalathur", "Two-wheeler", "Minor"], [13.01082, 80.21964, 2, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.96469, 80.1518, 8, "Pallavaram", "Two-wheeler", "Serious"], [12.89546, 80.07847, 2, "Vandalur", "Two-wheeler", "Serious"], [12.96775, 79.94278, 21, "Sriperumbudur", "Two-wheeler", "Serious"], [12.95341, 80.14288, 8, "Chromepet", "Two-wheeler", "Fatal"], [13.00613, 80.22145, 1, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [12.84155, 79.9519, 17, "Oragadam", "Car", "Serious"], [12.89091, 80.0838, 20, "Vandalur", "Car", "Minor"], [12.92872, 80.09955, 18, "Tambaram", "Car", "Serious"], [12.97235, 80.15108, 8, "Pallavaram", "Car", "Serious"], [12.95386, 80.14894, 20, "Chromepet", "Two-wheeler", "Minor"], [12.96924, 79.94463, 22, "Sriperumbudur", "Two-wheeler", "Minor"], [12.83288, 79.70118, 1, "Kanchipuram", "Car", "Serious"], [12.97195, 80.15702, 6, "Pallavaram", "Truck/Bus", "Minor"], [13.04529, 80.09482, 9, "Poonamallee", "Truck/Bus", "Minor"], [12.96706, 80.14785, 18, "Pallavaram", "Two-wheeler", "Minor"], [12.95148, 80.15358, 8, "Chromepet", "Two-wheeler", "Serious"], [13.01247, 80.22038, 0, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.90486, 80.08536, 12, "Perungalathur", "Two-wheeler", "Serious"], [12.92703, 80.10283, 6, "Tambaram", "Auto-rickshaw", "Minor"], [12.90569, 80.09592, 14, "Perungalathur", "Car", "Minor"], [12.82639, 79.70092, 4, "Kanchipuram", "Auto-rickshaw", "Minor"], [12.8279, 79.7066, 18, "Kanchipuram", "Two-wheeler", "Serious"], [12.89689, 80.08822, 18, "Perungalathur", "Truck/Bus", "Minor"], [13.05365, 80.0937, 22, "Poonamallee", "Two-wheeler", "Fatal"], [12.84474, 79.95342, 10, "Oragadam", "Two-wheeler", "Serious"], [12.96705, 80.15053, 13, "Pallavaram", "Two-wheeler", "Minor"], [12.9069, 80.09127, 17, "Perungalathur", "Two-wheeler", "Minor"], [13.00753, 80.21517, 9, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [12.92377, 80.09964, 4, "Tambaram", "Two-wheeler", "Serious"], [12.9487, 80.14605, 11, "Chromepet", "Two-wheeler", "Serious"], [12.88844, 80.08414, 7, "Vandalur", "Auto-rickshaw", "Minor"], [12.92107, 80.0981, 7, "Tambaram", "Car", "Fatal"], [12.84226, 79.9489, 1, "Oragadam", "Car", "Minor"], [13.00315, 80.22312, 0, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [13.00758, 80.22524, 1, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.91515, 80.09277, 0, "Perungalathur", "Truck/Bus", "Serious"], [12.94964, 80.13923, 9, "Chromepet", "Two-wheeler", "Minor"], [13.07067, 80.19805, 4, "Koyambedu", "Two-wheeler", "Minor"], [12.95261, 80.14682, 20, "Chromepet", "Car", "Minor"], [12.92788, 80.09825, 17, "Tambaram", "Car", "Minor"], [12.94703, 80.14612, 22, "Chromepet", "Car", "Serious"], [13.04302, 80.09523, 14, "Poonamallee", "Truck/Bus", "Fatal"], [12.92402, 80.10296, 21, "Tambaram", "Car", "Minor"], [12.97172, 80.1489, 7, "Pallavaram", "Truck/Bus", "Fatal"], [13.00964, 80.22074, 8, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.8028, 79.83059, 17, "Walajabad", "Car", "Minor"], [12.84225, 79.96076, 23, "Oragadam", "Car", "Serious"], [12.89684, 80.08061, 7, "Vandalur", "Car", "Minor"], [12.96579, 80.15073, 23, "Pallavaram", "Two-wheeler", "Serious"], [12.94946, 80.14423, 8, "Chromepet", "Two-wheeler", "Minor"], [13.01115, 80.22146, 18, "Guindy (Kathipara)", "Auto-rickshaw", "Minor"], [12.9642, 80.15233, 21, "Pallavaram", "Two-wheeler", "Serious"], [13.00282, 80.22326, 17, "Guindy (Kathipara)", "Truck/Bus", "Minor"], [13.00931, 80.22029, 9, "Guindy (Kathipara)", "Car", "Minor"], [13.07323, 80.19389, 23, "Koyambedu", "Truck/Bus", "Minor"], [12.79373, 79.82989, 7, "Walajabad", "Car", "Minor"], [12.92909, 80.10007, 16, "Tambaram", "Two-wheeler", "Serious"], [12.83322, 79.70296, 6, "Kanchipuram", "Two-wheeler", "Minor"], [12.89365, 80.0777, 12, "Vandalur", "Car", "Minor"], [12.96898, 80.15621, 14, "Pallavaram", "Car", "Minor"], [12.83444, 79.7038, 11, "Kanchipuram", "Car", "Minor"], [12.95309, 80.1433, 23, "Chromepet", "Auto-rickshaw", "Minor"], [12.91791, 80.09574, 7, "Tambaram", "Car", "Minor"], [12.95421, 80.14071, 20, "Chromepet", "Two-wheeler", "Minor"], [13.07642, 80.19558, 12, "Koyambedu", "Car", "Minor"], [12.89513, 80.08083, 19, "Vandalur", "Auto-rickshaw", "Serious"], [12.9661, 80.14593, 12, "Pallavaram", "Car", "Serious"], [12.89638, 80.07656, 21, "Vandalur", "Two-wheeler", "Fatal"], [13.00394, 80.22414, 19, "Guindy (Kathipara)", "Auto-rickshaw", "Minor"], [12.7972, 79.82108, 17, "Walajabad", "Two-wheeler", "Minor"], [12.92959, 80.0954, 10, "Tambaram", "Truck/Bus", "Fatal"], [13.00626, 80.21419, 17, "Guindy (Kathipara)", "Auto-rickshaw", "Minor"], [12.96659, 79.94256, 18, "Sriperumbudur", "Two-wheeler", "Fatal"], [12.9516, 80.14334, 5, "Chromepet", "Two-wheeler", "Minor"], [13.00987, 80.222, 17, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [12.80121, 79.84004, 14, "Walajabad", "Truck/Bus", "Serious"], [12.83204, 79.70275, 20, "Kanchipuram", "Car", "Minor"], [12.92009, 80.0998, 9, "Tambaram", "Auto-rickshaw", "Minor"], [12.92692, 80.10142, 10, "Tambaram", "Car", "Serious"], [13.06506, 80.20016, 9, "Koyambedu", "Truck/Bus", "Serious"], [12.95224, 80.14333, 13, "Chromepet", "Car", "Fatal"], [12.99867, 80.22044, 12, "Guindy (Kathipara)", "Car", "Minor"], [13.05441, 80.09577, 15, "Poonamallee", "Two-wheeler", "Serious"], [13.01189, 80.22116, 20, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [12.95181, 80.14241, 23, "Chromepet", "Two-wheeler", "Fatal"], [12.96159, 80.1457, 6, "Pallavaram", "Two-wheeler", "Serious"], [12.83224, 79.70031, 20, "Kanchipuram", "Two-wheeler", "Fatal"], [12.94754, 80.14471, 16, "Chromepet", "Two-wheeler", "Serious"], [12.99943, 80.21599, 22, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [13.0052, 80.21737, 22, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [13.00611, 80.21718, 23, "Guindy (Kathipara)", "Car", "Fatal"], [12.84101, 79.9597, 19, "Oragadam", "Two-wheeler", "Minor"], [12.9045, 80.093, 6, "Perungalathur", "Car", "Minor"], [12.83603, 79.95244, 8, "Oragadam", "Two-wheeler", "Fatal"], [12.92414, 80.09668, 0, "Tambaram", "Car", "Serious"], [12.95861, 80.14607, 3, "Chromepet", "Car", "Serious"], [13.07462, 80.19571, 1, "Koyambedu", "Two-wheeler", "Minor"], [12.9489, 80.14485, 22, "Chromepet", "Car", "Serious"], [12.84774, 79.96145, 19, "Oragadam", "Car", "Fatal"], [12.95007, 80.14985, 20, "Chromepet", "Car", "Serious"], [12.80088, 79.83371, 18, "Walajabad", "Two-wheeler", "Minor"], [13.00487, 80.21666, 15, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [13.01481, 80.21879, 20, "Guindy (Kathipara)", "Car", "Fatal"], [13.00986, 80.21865, 17, "Guindy (Kathipara)", "Auto-rickshaw", "Minor"], [12.84432, 79.95563, 18, "Oragadam", "Truck/Bus", "Minor"], [12.90469, 80.09259, 8, "Perungalathur", "Two-wheeler", "Minor"], [13.04515, 80.09654, 20, "Poonamallee", "Car", "Minor"], [13.07547, 80.19546, 17, "Koyambedu", "Two-wheeler", "Serious"], [12.96411, 80.15403, 19, "Pallavaram", "Car", "Serious"], [12.8334, 79.70394, 22, "Kanchipuram", "Two-wheeler", "Serious"], [12.99989, 80.22163, 9, "Guindy (Kathipara)", "Car", "Serious"], [13.07249, 80.18844, 11, "Koyambedu", "Car", "Minor"], [12.88146, 80.07798, 0, "Vandalur", "Two-wheeler", "Minor"], [13.06375, 80.20052, 22, "Koyambedu", "Car", "Minor"], [12.83773, 79.71441, 6, "Kanchipuram", "Two-wheeler", "Minor"], [13.01205, 80.21566, 19, "Guindy (Kathipara)", "Truck/Bus", "Minor"], [12.89335, 80.07795, 13, "Vandalur", "Car", "Minor"], [13.00164, 80.21864, 20, "Guindy (Kathipara)", "Truck/Bus", "Fatal"], [12.90683, 80.09773, 18, "Perungalathur", "Car", "Fatal"], [13.00539, 80.22744, 11, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [12.92612, 80.09451, 18, "Tambaram", "Two-wheeler", "Minor"], [12.90769, 80.09199, 7, "Perungalathur", "Two-wheeler", "Serious"], [13.03874, 80.09337, 23, "Poonamallee", "Two-wheeler", "Serious"], [12.90069, 80.09353, 19, "Perungalathur", "Two-wheeler", "Serious"], [12.89431, 80.07814, 9, "Vandalur", "Two-wheeler", "Minor"], [12.96385, 80.15497, 20, "Pallavaram", "Auto-rickshaw", "Minor"], [12.89109, 80.07219, 3, "Vandalur", "Two-wheeler", "Serious"], [12.96706, 79.94962, 16, "Sriperumbudur", "Two-wheeler", "Minor"], [12.92355, 80.10364, 9, "Tambaram", "Two-wheeler", "Minor"], [12.84953, 79.95299, 6, "Oragadam", "Car", "Minor"], [12.93072, 80.10945, 4, "Tambaram", "Two-wheeler", "Fatal"], [12.89462, 80.07966, 23, "Vandalur", "Car", "Minor"], [12.94928, 80.14458, 23, "Chromepet", "Two-wheeler", "Serious"], [12.96367, 80.1495, 0, "Pallavaram", "Truck/Bus", "Minor"], [12.89479, 80.08783, 14, "Vandalur", "Truck/Bus", "Minor"], [12.9735, 80.14648, 8, "Pallavaram", "Two-wheeler", "Fatal"], [12.90588, 80.08884, 20, "Perungalathur", "Two-wheeler", "Minor"], [13.00759, 80.2254, 12, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [13.06173, 80.18979, 18, "Koyambedu", "Two-wheeler", "Minor"], [13.00252, 80.21921, 19, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [13.04499, 80.09087, 22, "Poonamallee", "Two-wheeler", "Serious"], [12.97087, 79.94176, 9, "Sriperumbudur", "Two-wheeler", "Fatal"], [13.06577, 80.19079, 23, "Koyambedu", "Truck/Bus", "Serious"], [12.95081, 80.14133, 11, "Chromepet", "Two-wheeler", "Minor"], [12.84896, 79.95501, 14, "Oragadam", "Two-wheeler", "Minor"], [12.95839, 80.14788, 7, "Chromepet", "Two-wheeler", "Minor"], [13.04375, 80.09174, 0, "Poonamallee", "Car", "Minor"], [12.9191, 80.10811, 17, "Tambaram", "Truck/Bus", "Minor"], [12.95384, 80.14789, 22, "Chromepet", "Truck/Bus", "Serious"], [12.97158, 79.94341, 15, "Sriperumbudur", "Two-wheeler", "Minor"], [13.01271, 80.21979, 19, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.96377, 80.15269, 23, "Pallavaram", "Car", "Serious"], [13.00668, 80.21621, 10, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [13.01262, 80.22108, 9, "Guindy (Kathipara)", "Two-wheeler", "Fatal"], [12.97256, 79.94577, 18, "Sriperumbudur", "Truck/Bus", "Serious"], [12.89974, 80.08103, 7, "Vandalur", "Two-wheeler", "Minor"], [12.96694, 80.14635, 9, "Pallavaram", "Two-wheeler", "Serious"], [12.96553, 80.15064, 7, "Pallavaram", "Two-wheeler", "Serious"], [12.90795, 80.08824, 20, "Perungalathur", "Car", "Minor"], [12.90452, 80.08161, 8, "Perungalathur", "Two-wheeler", "Minor"], [13.06794, 80.19464, 19, "Koyambedu", "Car", "Serious"], [12.95068, 80.15157, 7, "Chromepet", "Two-wheeler", "Minor"], [13.00548, 80.22151, 18, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [12.90074, 80.08619, 19, "Perungalathur", "Car", "Minor"], [12.96915, 80.14611, 16, "Pallavaram", "Two-wheeler", "Minor"], [13.04703, 80.09075, 13, "Poonamallee", "Two-wheeler", "Fatal"], [13.01125, 80.21857, 17, "Guindy (Kathipara)", "Auto-rickshaw", "Fatal"], [12.93361, 80.09836, 12, "Tambaram", "Car", "Serious"], [12.90596, 80.09793, 18, "Perungalathur", "Car", "Serious"], [13.00093, 80.22009, 13, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.79845, 79.82825, 8, "Walajabad", "Car", "Minor"], [12.96378, 79.94306, 7, "Sriperumbudur", "Truck/Bus", "Minor"], [12.90497, 80.09442, 20, "Perungalathur", "Car", "Minor"], [12.97063, 80.14324, 20, "Pallavaram", "Two-wheeler", "Minor"], [12.96544, 80.1495, 7, "Pallavaram", "Two-wheeler", "Serious"], [12.94995, 80.14158, 7, "Chromepet", "Two-wheeler", "Minor"], [12.89406, 80.07702, 18, "Vandalur", "Two-wheeler", "Minor"], [12.97245, 80.14716, 8, "Pallavaram", "Two-wheeler", "Serious"], [12.89601, 80.08154, 8, "Vandalur", "Car", "Minor"], [12.83486, 79.70395, 4, "Kanchipuram", "Auto-rickshaw", "Fatal"], [12.9701, 79.94329, 8, "Sriperumbudur", "Two-wheeler", "Fatal"], [12.94855, 80.14656, 9, "Chromepet", "Two-wheeler", "Minor"], [12.82683, 79.70637, 18, "Kanchipuram", "Truck/Bus", "Minor"], [12.97647, 79.93858, 22, "Sriperumbudur", "Auto-rickshaw", "Fatal"], [13.0136, 80.21778, 3, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [13.01133, 80.21713, 22, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.79731, 79.83912, 8, "Walajabad", "Two-wheeler", "Minor"], [12.96944, 79.93703, 4, "Sriperumbudur", "Two-wheeler", "Serious"], [12.89587, 80.08156, 19, "Vandalur", "Two-wheeler", "Minor"], [12.92534, 80.1046, 22, "Tambaram", "Car", "Minor"], [13.00852, 80.22472, 9, "Guindy (Kathipara)", "Car", "Fatal"], [12.99806, 80.2247, 20, "Guindy (Kathipara)", "Truck/Bus", "Serious"], [12.79537, 79.82856, 19, "Walajabad", "Car", "Minor"], [12.94733, 80.14891, 13, "Chromepet", "Two-wheeler", "Fatal"], [12.92589, 80.1008, 9, "Tambaram", "Car", "Minor"], [12.97199, 80.14605, 20, "Pallavaram", "Truck/Bus", "Minor"], [12.84317, 79.70505, 11, "Kanchipuram", "Car", "Minor"], [12.95642, 80.14391, 23, "Chromepet", "Auto-rickshaw", "Minor"], [12.95387, 80.13803, 20, "Chromepet", "Truck/Bus", "Minor"], [12.94669, 80.14855, 20, "Chromepet", "Two-wheeler", "Serious"], [12.96894, 79.93804, 9, "Sriperumbudur", "Two-wheeler", "Minor"], [13.00551, 80.21626, 5, "Guindy (Kathipara)", "Car", "Minor"], [13.01148, 80.22399, 19, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [12.8351, 79.70756, 8, "Kanchipuram", "Two-wheeler", "Fatal"], [12.96708, 80.15304, 8, "Pallavaram", "Car", "Fatal"], [12.94649, 80.14334, 17, "Chromepet", "Car", "Serious"], [13.00269, 80.22201, 17, "Guindy (Kathipara)", "Truck/Bus", "Serious"], [12.83541, 79.69951, 1, "Kanchipuram", "Truck/Bus", "Minor"], [12.96966, 80.14734, 20, "Pallavaram", "Two-wheeler", "Fatal"], [13.01234, 80.21852, 20, "Guindy (Kathipara)", "Car", "Serious"], [12.83419, 79.70806, 21, "Kanchipuram", "Car", "Minor"], [13.04372, 80.09249, 22, "Poonamallee", "Two-wheeler", "Minor"], [13.05532, 80.09982, 9, "Poonamallee", "Two-wheeler", "Serious"], [12.90485, 80.09091, 7, "Perungalathur", "Auto-rickshaw", "Fatal"], [12.88827, 80.08378, 10, "Vandalur", "Two-wheeler", "Minor"], [12.9286, 80.10502, 10, "Tambaram", "Car", "Serious"], [12.79959, 79.8286, 22, "Walajabad", "Two-wheeler", "Serious"], [13.01276, 80.21288, 17, "Guindy (Kathipara)", "Car", "Serious"], [13.00611, 80.21644, 20, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.84201, 79.94978, 0, "Oragadam", "Car", "Serious"], [13.01157, 80.21623, 8, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.96278, 80.14655, 23, "Pallavaram", "Car", "Serious"], [13.06456, 80.19846, 9, "Koyambedu", "Truck/Bus", "Serious"], [13.04595, 80.09468, 1, "Poonamallee", "Auto-rickshaw", "Serious"], [12.89182, 80.08385, 20, "Vandalur", "Two-wheeler", "Serious"], [13.00634, 80.21547, 2, "Guindy (Kathipara)", "Two-wheeler", "Serious"], [12.94323, 80.14351, 0, "Chromepet", "Car", "Minor"], [12.92627, 80.09934, 11, "Tambaram", "Truck/Bus", "Fatal"], [12.88628, 80.07786, 10, "Vandalur", "Two-wheeler", "Fatal"], [12.95009, 80.14716, 20, "Chromepet", "Two-wheeler", "Serious"], [13.06238, 80.19062, 9, "Koyambedu", "Two-wheeler", "Minor"], [13.06697, 80.19404, 3, "Koyambedu", "Car", "Serious"], [12.91049, 80.08511, 17, "Perungalathur", "Two-wheeler", "Minor"], [12.97073, 80.14972, 5, "Pallavaram", "Car", "Minor"], [13.0071, 80.21644, 7, "Guindy (Kathipara)", "Auto-rickshaw", "Minor"], [12.84088, 79.70704, 23, "Kanchipuram", "Truck/Bus", "Serious"], [13.00662, 80.22802, 18, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.96957, 79.9477, 20, "Sriperumbudur", "Car", "Minor"], [12.88704, 80.08124, 18, "Vandalur", "Auto-rickshaw", "Serious"], [12.88776, 80.07546, 1, "Vandalur", "Car", "Serious"], [12.89034, 80.07637, 17, "Vandalur", "Two-wheeler", "Minor"], [12.97171, 80.15044, 18, "Pallavaram", "Two-wheeler", "Minor"], [12.97588, 79.93898, 19, "Sriperumbudur", "Truck/Bus", "Minor"], [13.06804, 80.19475, 10, "Koyambedu", "Two-wheeler", "Minor"], [12.92697, 80.09882, 19, "Tambaram", "Two-wheeler", "Serious"], [13.00304, 80.22545, 15, "Guindy (Kathipara)", "Car", "Minor"], [12.96444, 79.94099, 11, "Sriperumbudur", "Car", "Serious"], [12.88957, 80.08194, 19, "Vandalur", "Two-wheeler", "Serious"], [13.05195, 80.09727, 7, "Poonamallee", "Auto-rickshaw", "Serious"], [12.97746, 80.14703, 10, "Pallavaram", "Car", "Serious"], [12.83935, 79.69965, 10, "Kanchipuram", "Auto-rickshaw", "Fatal"], [12.92775, 80.09625, 21, "Tambaram", "Truck/Bus", "Minor"], [12.88663, 80.08287, 10, "Vandalur", "Two-wheeler", "Serious"], [13.00865, 80.22403, 7, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [12.95056, 80.14508, 9, "Chromepet", "Two-wheeler", "Serious"], [12.95358, 80.14031, 9, "Chromepet", "Truck/Bus", "Minor"], [13.04415, 80.08998, 13, "Poonamallee", "Auto-rickshaw", "Fatal"], [12.96644, 80.14553, 1, "Pallavaram", "Car", "Minor"], [12.8853, 80.07534, 19, "Vandalur", "Two-wheeler", "Minor"], [12.94911, 80.14656, 8, "Chromepet", "Car", "Serious"], [12.971, 80.145, 17, "Pallavaram", "Car", "Serious"], [12.97778, 80.14512, 23, "Pallavaram", "Car", "Minor"], [12.84207, 79.95324, 18, "Oragadam", "Auto-rickshaw", "Minor"], [12.88948, 80.0816, 5, "Vandalur", "Two-wheeler", "Minor"], [12.91677, 80.10591, 20, "Tambaram", "Truck/Bus", "Serious"], [12.90473, 80.08645, 23, "Perungalathur", "Car", "Serious"], [12.90198, 80.08918, 2, "Perungalathur", "Car", "Minor"], [12.94872, 80.15375, 17, "Chromepet", "Two-wheeler", "Serious"], [12.96001, 80.14753, 15, "Chromepet", "Car", "Minor"], [12.84881, 79.96167, 18, "Oragadam", "Two-wheeler", "Fatal"], [13.00249, 80.22532, 23, "Guindy (Kathipara)", "Two-wheeler", "Minor"], [13.06545, 80.18841, 1, "Koyambedu", "Car", "Minor"], [12.97224, 80.14703, 9, "Pallavaram", "Car", "Serious"], [12.90559, 80.08842, 20, "Perungalathur", "Two-wheeler", "Minor"], [12.95158, 80.145, 22, "Chromepet", "Two-wheeler", "Serious"], [12.8948, 80.08359, 7, "Vandalur", "Auto-rickshaw", "Serious"], [12.89249, 80.07919, 9, "Vandalur", "Car", "Minor"], [12.95694, 80.15019, 19, "Chromepet", "Truck/Bus", "Serious"], [13.06853, 80.19159, 20, "Koyambedu", "Truck/Bus", "Minor"], [12.92504, 80.09777, 11, "Tambaram", "Truck/Bus", "Minor"], [12.91732, 80.10098, 19, "Tambaram", "Auto-rickshaw", "Serious"], [12.96697, 80.1469, 6, "Pallavaram", "Truck/Bus", "Minor"], [12.90903, 80.0887, 10, "Perungalathur", "Two-wheeler", "Minor"], [13.00766, 80.2179, 21, "Guindy (Kathipara)", "Car", "Minor"], [13.01256, 80.22495, 22, "Guindy (Kathipara)", "Truck/Bus", "Fatal"], [12.80219, 79.82932, 9, "Walajabad", "Two-wheeler", "Minor"], [13.00574, 80.21591, 0, "Guindy (Kathipara)", "Truck/Bus", "Minor"], [12.92951, 80.11132, 17, "Tambaram", "Two-wheeler", "Serious"], [12.84147, 79.95362, 21, "Oragadam", "Two-wheeler", "Fatal"], [13.04815, 80.09714, 20, "Poonamallee", "Two-wheeler", "Fatal"]]; /* rows: [lat, lon, hour, area, vehicle, severity] */
-var COL={High:'#d7263d',Medium:'#f4a259',Low:'#2a9d8f'},RC=['#1d6fb8','#7b2cbf','#e76f51'];
-var TIMES={'All day':function(h){return true},'Morning (6 AM-12 PM)':function(h){return h>=6&&h<12},'Afternoon (12-5 PM)':function(h){return h>=12&&h<17},'Evening (5-9 PM)':function(h){return h>=17&&h<21},'Night (9 PM-6 AM)':function(h){return h>=21||h<6}};
-var VEH=['All vehicles','Two-wheeler','Car','Truck/Bus','Auto-rickshaw'];
-var CATS={hospital:['&#127973;','Hospitals'],pharmacy:['&#128138;','Medical stores'],police:['&#128659;','Police stations'],fuel:['&#9981;','Petrol bunks'],mech:['&#128295;','Tyre / vehicle mechanics']};
-var routes=[],sel=0,hot=[],map,hotL,routeL,svcL,svcTok=0;
-function $(i){return document.getElementById(i)}
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function fmtH(h){return h===null?'-':((h%12)||12)+(h>=12?' PM':' AM')}
-function fmtT(m){m=Math.round(m);return m>=60?Math.floor(m/60)+' h '+(m%60)+' min':m+' min'}
-function xy(a,b){return [b*0.9744*111.32,a*110.57]}
-function dist(p,line){var q=xy(p[0],p[1]),best=1e9;for(var i=0;i<line.length-1;i++){var A=line[i],B=line[i+1],dx=B[0]-A[0],dy=B[1]-A[1],l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,((q[0]-A[0])*dx+(q[1]-A[1])*dy)/l)):0;var d=Math.hypot(q[0]-A[0]-t*dx,q[1]-A[1]-t*dy);if(d<best)best=d}return best}
-function fill(id,arr){$(id).innerHTML=arr.map(function(k){return '<option>'+esc(k)+'</option>'}).join('')}
-function rows(){var f=TIMES[$('timeSel').value],v=$('vehSel').value;return D.filter(function(r){return f(r[2])&&(v==='All vehicles'||r[4]===v)})}
+'use strict';
+const $=(s,e)=>(e||document).querySelector(s), $$=(s,e)=>[...(e||document).querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){let u=0,v=0;while(u===0)u=r();while(v===0)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function hav(a,b,c,d){const p=Math.PI/180,dl=(c-a)*p,dn=(d-b)*p,x=Math.sin(dl/2)**2+Math.cos(a*p)*Math.cos(c*p)*Math.sin(dn/2)**2;return 12742*Math.asin(Math.sqrt(x))}
+function nearKm(la,lo,pts){const k=Math.cos(la*Math.PI/180)*111.32;let m=1e9;for(const p of pts){const dx=(p[1]-lo)*k,dy=(p[0]-la)*110.57,d=dx*dx+dy*dy;if(d<m)m=d}return Math.sqrt(m)}
+const inr=n=>'₹'+(Math.round(n/5)*5).toLocaleString('en-IN');
+function hm(min){const t=Math.round(min),h=Math.floor(t/60),m=t%60;return h+' h '+(m<10?'0':'')+m+' m'}
+const hh=h=>(h<10?'0':'')+h+':00';
+function hash(s){let h=7;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h}
+function copyText(text,node,btn){
+  const done=()=>{if(btn){const o=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=o,1500)}};
+  const fb=()=>{try{const r=document.createRange();r.selectNodeContents(node);const s=getSelection();s.removeAllRanges();s.addRange(r)}catch(e){}if(btn)btn.textContent='Selected, press copy'};
+  try{navigator.clipboard.writeText(text).then(done,fb)}catch(e){fb()}
+}
+function fillSelect(el,items,val){el.innerHTML=items.map(i=>`<option value="${esc(i[0])}"${i[0]===val?' selected':''}>${esc(i[1])}</option>`).join('')}
 
-function hotspots(R){var g={};R.forEach(function(r){var o=g[r[3]]||(g[r[3]]={area:r[3],n:0,f:0,la:0,lo:0});o.n++;o.la+=r[0];o.lo+=r[1];if(r[5]==='Fatal')o.f++});
- var a=Object.keys(g).map(function(k){var o=g[k];return {area:o.area,count:o.n,fatal:o.f,lat:o.la/o.n,lon:o.lo/o.n}}).sort(function(x,y){return y.count-x.count});
- var big=a.length?a[0].count:1;a.forEach(function(h){var q=h.count/big;h.level=q>=0.66?'High':q>=0.33?'Medium':'Low'});return a}
+/* ---------- data model ---------- */
+const ROADS=['National Highway','State Highway','Urban road','Ghat / bypass','Other'];
+const VEHT=['Two-wheeler','Three-wheeler','Car','Heavy vehicle','Bus','Other'];
+const HW=[2,1.5,1.3,1.3,1.5,2.5,4,5.5,5.5,4.5,4,4,4.2,4,4,4.5,5.5,7,8,8,7,5.5,4,3],HS=HW.reduce((a,b)=>a+b,0);
+function baseHour(r){let x=r()*HS;for(let i=0;i<24;i++){x-=HW[i];if(x<=0)return i}return 23}
+function wpick(r,w){const s=w.reduce((a,b)=>a+b,0);let x=r()*s;for(let i=0;i<w.length;i++){x-=w[i];if(x<=0)return i}return w.length-1}
+const S={routes:[],sel:0,veh:'4w',price:{petrol:100,diesel:92,elec:8},ov:{},acc:[],real:false,fileName:'',from:null,to:null,types:{hospital:1,medical:1,police:1,petrol:1,tyre:1},label:''};
 
-function render(){
- var R=rows();hot=hotspots(R);var h24=[];for(var i=0;i<24;i++)h24.push(0);R.forEach(function(r){h24[r[2]]++});
- var mx=Math.max.apply(null,h24),pk=R.length?h24.indexOf(mx):null;
- $('sTotal').textContent=R.length;$('sArea').textContent=hot.length?hot[0].area:'-';$('sHour').textContent=fmtH(pk);
- $('top').innerHTML=hot.slice(0,10).map(function(h,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(h.area)+'</td><td>'+h.count+'</td><td>'+h.fatal+'</td><td><span class="badge" style="background:'+COL[h.level]+'">'+h.level+'</span></td></tr>'}).join('')||'<tr><td colspan="5">No accidents in this selection.</td></tr>';
- $('chart').innerHTML=h24.map(function(v,i){return '<div class="col"><div class="bar'+(i===pk?' peak':'')+'" style="height:'+Math.round(v/(mx||1)*100)+'%" title="'+fmtH(i)+': '+v+'"></div><span class="lbl">'+(i%3===0?i:'')+'</span></div>'}).join('');
- routes.forEach(function(r){r.count=R.filter(function(a){return dist([a[0],a[1]],r.xy)<=1.5}).length;r.per10=Math.round(r.count/r.km*100)/10;
-  r.high=hot.filter(function(h){return h.level==='High'&&dist([h.lat,h.lon],r.xy)<=1.5}).map(function(h){return h.area})});
- drawMap();drawRoutes()}
+function sampleRecords(label,routes,seed){
+  const r=rng(seed),recs=[],vb=[0.38,0.07,0.22,0.22,0.11,0.0],flip=r()<0.35;let cl=0;
+  routes.forEach((rt,ri)=>{
+    const div=((ri===0)!==flip)?28:64,nC=Math.max(2,Math.round(rt.km/div)),mix=ri===0?[0.6,0.15,0.15,0.1,0]:[0.25,0.5,0.15,0.1,0];
+    for(let k=0;k<nC;k++){
+      cl++;const ctr=rt.dense[Math.floor(rt.dense.length*(0.06+0.88*r()))],size=12+Math.floor(r()*24),peak=[7,9,13,18,19,21,22,23,1][Math.floor(r()*9)],road=wpick(r,mix),bias=Math.floor(r()*5),w=vb.slice();w[bias]+=0.35;
+      for(let j=0;j<size;j++){
+        const hour=r()<0.65?((Math.round(peak+gauss(r)*2)%24)+24)%24:baseHour(r),night=hour>=21||hour<5,p=r(),fp=night?0.2:0.1;
+        recs.push({lat:ctr[0]+gauss(r)*0.009,lon:ctr[1]+gauss(r)*0.009,hour,road:ROADS[road],veh:VEHT[wpick(r,w)],sev:p<fp?2:(p<fp+0.3?1:0),city:label,loc:label+' · sample cluster '+cl,sample:true});
+      }
+    }
+    for(let q=0;q<Math.round(rt.km/10);q++){
+      const cc=rt.dense[Math.floor(r()*rt.dense.length)],hr=baseHour(r),p2=r(),fp2=(hr>=21||hr<5)?0.2:0.1;
+      recs.push({lat:cc[0]+gauss(r)*0.012,lon:cc[1]+gauss(r)*0.012,hour:hr,road:ROADS[wpick(r,mix)],veh:VEHT[wpick(r,vb)],sev:p2<fp2?2:(p2<fp2+0.3?1:0),city:label,loc:label+' · scattered sample',sample:true});
+    }
+  });
+  return recs;
+}
+function cells(recs,size){
+  const m={};
+  recs.forEach(x=>{
+    const k=Math.floor(x.lat/size)+','+Math.floor(x.lon/size);let c=m[k];
+    if(!c)c=m[k]={n:0,w:0,f:0,la:0,lo:0,veh:{},hr:{},road:{},loc:{}};
+    c.n++;c.w+=x.sev+1;if(x.sev===2)c.f++;c.la+=x.lat;c.lo+=x.lon;
+    c.veh[x.veh]=(c.veh[x.veh]||0)+1;c.hr[x.hour]=(c.hr[x.hour]||0)+1;c.road[x.road]=(c.road[x.road]||0)+1;if(x.loc)c.loc[x.loc]=(c.loc[x.loc]||0)+1;
+  });
+  return Object.values(m).map(c=>(c.lat=c.la/c.n,c.lon=c.lo/c.n,c));
+}
+function levelize(cs){let mx=1;cs.forEach(c=>{if(c.w>mx)mx=c.w});cs.forEach(c=>{c.q=c.w/mx;c.lvl=c.q>=0.6?'high':(c.q>=0.3?'mid':'low')});return cs.filter(c=>c.q>=0.12)}
+function topKey(o){let b=null,v=-1;for(const k in o)if(o[k]>v){v=o[k];b=k}return b}
+const band=s=>s<35?{t:'Lower',c:'lo'}:(s<60?{t:'Moderate',c:'md'}:{t:'Higher',c:'hi'});
 
-function drawMap(){hotL.clearLayers();routeL.clearLayers();
- hot.forEach(function(h){var c=COL[h.level];L.circleMarker([h.lat,h.lon],{radius:6+Math.sqrt(h.count)*2,color:c,fillColor:c,fillOpacity:.5,weight:2}).bindPopup('<b>'+esc(h.area)+'</b><br>Accidents: '+h.count+'<br>Fatal: '+h.fatal+'<br>Risk: '+h.level).addTo(hotL)});
- routes.forEach(function(r,i){L.polyline(r.pts,{color:r.color,weight:i===sel?7:4,opacity:i===sel?.95:.5,dashArray:i===1?'10 8':null}).bindTooltip(r.name).addTo(routeL)})}
-
-function drawRoutes(){
- if(!routes.length)return;var best=0;routes.forEach(function(r,i){if(r.per10<routes[best].per10)best=i});
- $('reco').textContent=routes.length>1?'Suggested safer route: '+routes[best].name+' ('+routes[best].per10+' accidents per 10 km, about '+fmtT(routes[best].min)+').':'Only one route found: '+routes[0].name+' ('+routes[0].per10+' accidents per 10 km).';
- $('routes').innerHTML=routes.map(function(r,i){var tag=routes.length>1?(i===best?'<span class="tag good">Safer</span>':'<span class="tag bad">Riskier</span>'):'';
-  var w=r.high.length?'<p class="warn">&#9888; Warning: passes through high-risk areas: '+esc(r.high.join(', '))+'</p>':'<p class="ok">No high-risk areas on this route in this selection.</p>';
-  return '<div class="route'+(i===sel?' sel':'')+'" data-i="'+i+'" style="border-left-color:'+r.color+'"><h3>'+r.name+' '+tag+'</h3><p><b>'+fmtT(r.min)+'</b> average driving time &middot; '+r.km.toFixed(0)+' km</p><p><b>'+r.per10+'</b> accidents per 10 km (risk score) &middot; '+r.count+' accidents near route</p>'+w+'</div>'}).join('');
- Array.prototype.forEach.call(document.querySelectorAll('.route'),function(e){e.onclick=function(){sel=+e.getAttribute('data-i');drawRoutes();drawMap();loadSvc()}})}
-
-async function geo(q){var r=await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q='+encodeURIComponent(q))).json();if(!r.length)throw new Error('Place not found: '+q);return {lat:+r[0].lat,lon:+r[0].lon}}
-
-async function go(){
- $('msg').textContent='Searching places and routes...'+(location.protocol==='file:'?' (Tip: if map tiles look blank, open this page through localhost or GitHub Pages)':'');
- try{var a=await geo($('from').value),b=await geo($('to').value);
-  var u='https://router.project-osrm.org/route/v1/driving/'+a.lon+','+a.lat+';'+b.lon+','+b.lat+'?overview=full&geometries=geojson&alternatives=true';
-  var j=await (await fetch(u)).json();if(!j.routes||!j.routes.length)throw new Error('No road route found');
-  routes=j.routes.slice(0,3).map(function(x,i){var p=x.geometry.coordinates.map(function(c){return [c[1],c[0]]});var s=Math.max(1,Math.floor(p.length/500));
-   return {name:'Route '+'ABC'[i],pts:p,xy:p.filter(function(_,k){return k%s===0||k===p.length-1}).map(function(c){return xy(c[0],c[1])}),km:x.distance/1000,min:x.duration/60,color:RC[i]}});
-  render();var best=0;routes.forEach(function(r,i){if(r.per10<routes[best].per10)best=i});sel=best;drawRoutes();drawMap();
-  map.fitBounds(L.polyline(routes[0].pts).getBounds());$('msg').textContent='Done. Showing '+routes.length+' route(s).';loadSvc()
- }catch(e){$('msg').textContent='Could not complete: '+e.message+' (check internet or try a different place name).'}}
-
-async function loadSvc(){
- var rt=routes[sel];if(!rt)return;var my=++svcTok;$('svc').innerHTML='<div class="card">Loading nearby places...</div>';svcL.clearLayers();
- var st=Math.max(1,Math.floor(rt.pts.length/12)),s=[];for(var i=0;i<rt.pts.length;i+=st)s.push(rt.pts[i][0].toFixed(4)+','+rt.pts[i][1].toFixed(4));
- var l=rt.pts[rt.pts.length-1];s.push(l[0].toFixed(4)+','+l[1].toFixed(4));var ar='(around:2000,'+s.join(',')+')';
- var q='[out:json][timeout:25];(nwr["amenity"~"^(hospital|pharmacy|police|fuel)$"]'+ar+';nwr["shop"~"^(tyres|car_repair)$"]'+ar+';);out center 250;';
- try{var j=await (await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)})).json();if(my!==svcTok)return;var g={hospital:[],pharmacy:[],police:[],fuel:[],mech:[]};
-  j.elements.forEach(function(e){var t=e.tags||{},k=(t.amenity&&g[t.amenity])?t.amenity:'mech',c=e.center||e;if(!g[k]||!c.lat)return;g[k].push({n:t.name||'(name not listed)',ph:t.phone||t['contact:phone']||'',lat:c.lat,lon:c.lon})});
-  $('svc').innerHTML=Object.keys(CATS).map(function(k){var a=g[k];a.slice(0,40).forEach(function(p){L.marker([p.lat,p.lon],{icon:L.divIcon({html:'<span style="font-size:18px">'+CATS[k][0]+'</span>',className:'',iconSize:[22,22]})}).bindPopup('<b>'+esc(p.n)+'</b><br>'+esc(p.ph||'Phone not listed')).addTo(svcL)});
-   return '<div class="card"><h3>'+CATS[k][0]+' '+CATS[k][1]+' ('+a.length+')</h3>'+(a.slice(0,6).map(function(p){return '<p><b>'+esc(p.n)+'</b>'+(p.ph?' &middot; '+esc(p.ph):'')+'</p>'}).join('')||'<p>None found near this route.</p>')+'</div>'}).join('')
- }catch(e){$('svc').innerHTML='<div class="card">Could not load nearby places (service busy or offline). Try tapping the route again.</div>'}}
-
-fill('timeSel',Object.keys(TIMES));fill('vehSel',VEH);
-map=L.map('map',{scrollWheelZoom:false}).setView([12.95,80.0],9);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
-hotL=L.layerGroup().addTo(map);routeL=L.layerGroup().addTo(map);svcL=L.layerGroup().addTo(map);
-$('timeSel').onchange=render;$('vehSel').onchange=render;$('go').onclick=go;
-render();go();
+/* default sample so Analytics works before any search */
+(function(){
+  const pts=[[13.0827,80.2707],[12.9675,79.9419],[12.9262,79.365],[12.9165,79.1325],[12.7904,78.7164],[12.5186,78.2137],[12.7409,77.8253],[12.9716,77.5946]];
+  const dense=[];for(let i=0;i<pts.length-1;i++){const n=Math.ceil(hav(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1])/1.5);for(let k=0;k<n;k++){const t=k/n;dense.push([pts[i][0]+(pts[i+1][0]-pts[i][0])*t,pts[i][1]+(pts[i+1][1]-pts[i][1])*t])}}
+  S.acc=sampleRecords('Chennai – Bengaluru (sample)',[{dense,km:350},{dense:dense.map(p=>[p[0]+0.05,p[1]-0.02]),km:330}],11);
 })();
-</script></body></html>
+
+/* ---------- vehicles and cost ---------- */
+const VEH=[
+ {id:'2w',name:'Two-wheeler (petrol)',en:'petrol',eff:45,toll:0},{id:'3w',name:'Three-wheeler (auto, petrol)',en:'petrol',eff:30,toll:0},
+ {id:'4w',name:'Four-wheeler (petrol car)',en:'petrol',eff:15,toll:1.6},{id:'4d',name:'Four-wheeler (diesel car)',en:'diesel',eff:18,toll:1.6},
+ {id:'hv',name:'Heavy vehicle (truck, diesel)',en:'diesel',eff:4,toll:5.4},{id:'e2',name:'Electric two-wheeler',en:'elec',eff:30,toll:0},
+ {id:'e3',name:'Electric three-wheeler',en:'elec',eff:12,toll:0},{id:'e4',name:'Electric car',en:'elec',eff:6.5,toll:1.6}
+];
+const vehById=id=>VEH.find(v=>v.id===id), unit=v=>v.en==='elec'?'km/kWh':'km/l';
+function costOf(v,km,share){const o=S.ov[v.id]||{},eff=o.eff!=null?o.eff:v.eff,tr=o.toll!=null?o.toll:v.toll,price=S.price[v.en];const energy=km/eff*price,toll=km*share*tr;return{energy,toll,total:energy+toll,eff,tr,price}}
+const tollShare=()=>Math.min(1,Math.max(0,(parseFloat($('#tollShare').value)||0)/100));
+
+/* ---------- search, routing ---------- */
+async function fetchJSON(url,opts,ms){
+  /* No AbortSignal: some preview sandboxes proxy fetch via postMessage and cannot clone it. Timeout via Promise.race instead. */
+  let timer;
+  const timeout=new Promise((_,rej)=>{timer=setTimeout(()=>{const e=new Error('timed out');e.name='TimeoutError';rej(e)},ms||12000)});
+  try{
+    const r=await Promise.race([fetch(url,opts||undefined),timeout]);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return await r.json();
+  }finally{clearTimeout(timer)}
+}
+async function geocode(q){
+  if(!q)throw new Error('Please enter both a starting point and a destination.');
+  const notFound=()=>{const e=new Error('Could not find "'+q+'". Try adding the state, for example "Vellore, Tamil Nadu".');e.nf=true;return e};
+  const why=e=>e&&(e.name==='AbortError'||e.name==='TimeoutError')?'timed out':(e&&e.message)||'failed';
+  const tried=[],enc=encodeURIComponent(q);
+  const providers=[
+    ['Nominatim',async()=>{
+      const j=await fetchJSON('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=in&q='+enc,{headers:{'Accept':'application/json'}});
+      if(!j.length)return null;
+      return {lat:+j[0].lat,lon:+j[0].lon,name:j[0].display_name.split(',')[0],full:j[0].display_name};
+    }],
+    ['Photon',async()=>{
+      const j=await fetchJSON('https://photon.komoot.io/api/?limit=1&lang=en&bbox=68,6,98,36&q='+enc);
+      const f=j.features&&j.features[0];if(!f)return null;
+      const pr=f.properties||{};
+      return {lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],name:pr.name||q,full:[pr.name,pr.state,pr.country].filter(Boolean).join(', ')};
+    }],
+    ['Open-Meteo',async()=>{
+      const first=q.split(',')[0].trim();
+      const j=await fetchJSON('https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&country_code=IN&name='+encodeURIComponent(first));
+      const r=j.results&&j.results[0];if(!r)return null;
+      return {lat:r.latitude,lon:r.longitude,name:r.name,full:[r.name,r.admin1,r.country].filter(Boolean).join(', ')};
+    }]
+  ];
+  let reached=false;
+  for(const [label,fn] of providers){
+    try{
+      const res=await fn();reached=true;
+      if(res)return res;
+      tried.push(label+': no match');
+    }catch(e){console.warn('Geocoder '+label+' failed:',e);tried.push(label+': '+why(e))}
+  }
+  if(reached)throw notFound();
+  throw new Error('Place search is unreachable right now ('+tried.join('; ')+'). If you opened the saved file or a preview, open the hosted link in a normal browser tab instead, and check that your internet or VPN is not blocking these sites.');
+}
+async function osrmRoute(a,b){
+  const path=`${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson&alternatives=true`;
+  const servers=['https://router.project-osrm.org/route/v1/driving/','https://routing.openstreetmap.de/routed-car/route/v1/driving/'];
+  let last;
+  for(const base of servers){
+    try{const j=await fetchJSON(base+path,null,20000);if(j.code==='Ok'&&j.routes&&j.routes.length)return j;last=new Error('No driving route found between these places.')}
+    catch(e){last=e}
+  }
+  if(last&&last.message==='No driving route found between these places.')throw last;
+  throw new Error('The routing service is unreachable right now. Check your internet connection and try again in a minute.');
+}
+function thin(coords){const out=coords.map(c=>[c[1],c[0]]),step=Math.ceil(out.length/3000);return step>1?out.filter((_,i)=>i%step===0||i===out.length-1):out}
+async function findRoutes(){
+  const btn=$('#go'),st=$('#status');btn.disabled=true;st.className='hint';st.textContent='Finding places…';
+  try{
+    const a=await geocode($('#fromQ').value.trim()),b=await geocode($('#toQ').value.trim());
+    st.textContent='Finding routes…';
+    const j=await osrmRoute(a,b);
+    S.from=a;S.to=b;S.label=a.name+' – '+b.name;
+    S.routes=j.routes.slice(0,3).map((r,i)=>({name:i===0?'Fastest route':'Alternative '+i,km:r.distance/1000,min:r.duration/60,dense:thin(r.geometry.coordinates)}));
+    if(!S.real){S.acc=S.acc.filter(x=>x.city!==S.label+' (sample)');S.acc=S.acc.concat(sampleRecords(S.label+' (sample)',S.routes,hash(S.label)))}
+    S.routes.forEach(rt=>rt.st=rstats(rt));
+    let best=0;S.routes.forEach((r,i)=>{if(r.st.score<S.routes[best].st.score)best=i});S.sel=best;
+    st.textContent='';$('#fromQ').value=a.name;$('#toQ').value=b.name;
+    renderAll();
+  }catch(e){st.className='err';st.textContent=e.message||'Something went wrong. Check your connection and try again.'}
+  btn.disabled=false;
+}
+function rstats(rt){
+  const la=rt.dense.map(p=>p[0]),lo=rt.dense.map(p=>p[1]),pad=0.05,x0=Math.min(...la)-pad,x1=Math.max(...la)+pad,y0=Math.min(...lo)-pad,y1=Math.max(...lo)+pad;
+  const pool=S.acc.filter(x=>x.lat>=x0&&x.lat<=x1&&x.lon>=y0&&x.lon<=y1);
+  const recs=pool.filter(x=>nearKm(x.lat,x.lon,rt.dense)<=2.5);let w=0,f=0;recs.forEach(x=>{w+=x.sev+1;if(x.sev===2)f++});
+  const score=Math.round(100*(1-Math.exp(-(w/rt.km)/1.6)));
+  const cs=levelize(cells(pool,0.05)),hs=cs.filter(h=>h.lvl!=='low'&&nearKm(h.lat,h.lon,rt.dense)<=3).length;
+  return {score,n:recs.length,f,hs};
+}
+
+/* ---------- plan rendering ---------- */
+let map,layer;
+function renderRoutes(){
+  const rs=S.routes,v=vehById(S.veh);
+  if(!rs.length){$('#routes').innerHTML='<div class="card"><p class="hint">Enter two places and press Find routes.</p></div>';$('#reco').hidden=true;return}
+  let best=0;rs.forEach((r,i)=>{if(r.st.score<rs[best].st.score)best=i});
+  const gap=rs.length>1?Math.max(...rs.map(r=>r.st.score))-Math.min(...rs.map(r=>r.st.score)):0;
+  $('#routes').innerHTML=rs.map((r,i)=>{
+    const b=band(r.st.score),cost=costOf(v,r.km,tollShare()).total,tag=(gap>=5&&i===best)?'<span class="badge">Safer option</span>':'';
+    return `<label class="route"><input type="radio" name="route" value="${i}"${i===S.sel?' checked':''}><span class="rhead"><span class="rname">${esc(r.name)}</span>${tag}</span>
+    <span class="stats"><span><b>${Math.round(r.km)} km</b><span>distance</span></span><span><b>${hm(r.min)}</b><span>est. average time</span></span><span><b>${inr(cost)}</b><span>est. cost</span></span></span>
+    <span class="rl"><span>Risk score ${r.st.score}/100</span><span class="${b.c}">${b.t} (indicative)</span></span><span class="meter"><i class="fl-${b.c}" style="width:${r.st.score}%"></i></span>
+    <span class="small">${r.st.hs} hotspot clusters, ${r.st.n} records near route, ${r.st.f} fatal</span></label>`;
+  }).join('');
+  $$('#routes input').forEach(i=>i.addEventListener('change',()=>{S.sel=+i.value;renderRoutes();drawMap();renderCost();hotIntro()}));
+  const rec=$('#reco');rec.hidden=false;
+  if(rs.length<2)rec.innerHTML='<h3>Only one route returned</h3><p class="small">No alternative was available, so there is nothing to compare for this trip.</p>';
+  else if(gap<5)rec.innerHTML=`<h3>The routes score about the same</h3><p class="small" style="margin-top:6px">Scores differ by ${gap} points, too little to prefer one on risk alone. Compare time and cost instead.</p>`;
+  else{
+    const sf=rs[best],fast=rs[0],dk=Math.round(sf.km-fast.km),dt=Math.round(sf.min-fast.min);
+    rec.innerHTML=best===0?`<h3>Suggested safer route: ${esc(sf.name)}</h3><p style="margin-top:6px">It also has the lowest indicative risk score (${sf.st.score}) of the routes found.</p><p class="small">Indicative only. Drive carefully on any route.</p>`
+      :`<h3>Suggested safer route: ${esc(sf.name)}</h3><p style="margin-top:6px">Indicative risk ${sf.st.score} against ${fast.st.score} on the fastest route. It is ${Math.abs(dk)} km ${dk>=0?'longer':'shorter'} and about ${Math.abs(dt)} min ${dt>=0?'slower':'faster'}.</p><p class="small">Indicative only. Drive carefully on any route.</p>`;
+  }
+}
+function hotIntro(){$('#hotdetail').innerHTML=S.routes.length?`<h3>${esc(S.routes[S.sel].name)} selected</h3><p class="small" style="margin-top:6px">Tap a hotspot circle to see records, peak hours and common vehicles. The thick blue line is the selected route.</p>`:'<h3>Hotspot details</h3><p class="small" style="margin-top:6px">Find a route, then tap a circle on the map.</p>'}
+function showHot(h){
+  const lv={high:'High',mid:'Medium',low:'Lower'}[h.lvl],pc={high:'hi',mid:'md',low:'lo'}[h.lvl],pk=+topKey(h.hr),loc=topKey(h.loc)||h.lat.toFixed(3)+', '+h.lon.toFixed(3);
+  $('#hotdetail').innerHTML=`<h3>${esc(loc)} <span class="pill ${pc}">${lv}</span></h3><dl class="kv"><dt>Records</dt><dd>${h.n}</dd><dt>Fatal</dt><dd>${h.f}</dd><dt>Peak hour</dt><dd>${hh(pk)}–${hh((pk+1)%24)}</dd><dt>Most involved</dt><dd>${esc(topKey(h.veh))}</dd><dt>Road type</dt><dd>${esc(topKey(h.road))}</dd></dl>${S.real?'':'<p class="small">Generated sample data for demonstration.</p>'}`;
+}
+function initMap(){
+  if(!window.L){$('#map').innerHTML='<p class="err" style="padding:16px">The map could not load. Open this page in a normal browser with internet access and reload. Routes, costs, SOS and analytics still work.</p>';return}
+  map=L.map('map',{scrollWheelZoom:false}).setView([13.0,78.8],7);
+  /* Basemaps that need no API key. tile.openstreetmap.org is intentionally NOT used (OSM tile usage policy: https://operations.osmfoundation.org/policies/tiles/). */
+  const esri=(svc,max)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+svc+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:max||19,attribution:'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, USGS, OpenStreetMap contributors'});
+  const base={
+    'Street (Esri)':esri('World_Street_Map'),
+    'Topographic (Esri)':esri('World_Topo_Map'),
+    'Satellite (Esri)':esri('World_Imagery')
+  };
+  base['Street (Esri)'].addTo(map);
+  L.control.layers(base,null,{position:'topright'}).addTo(map);
+  layer=L.layerGroup().addTo(map);
+}
+function drawMap(){
+  if(!map)return;layer.clearLayers();if(!S.routes.length)return;
+  const all=[];
+  S.routes.forEach((r,i)=>{if(i!==S.sel)L.polyline(r.dense,{color:'#6B7C87',weight:4,dashArray:'8 8',opacity:.9}).addTo(layer)});
+  const sel=S.routes[S.sel];L.polyline(sel.dense,{color:'#0B5CAD',weight:6,opacity:.95}).addTo(layer);
+  S.routes.forEach(r=>r.dense.forEach(p=>all.push(p)));
+  const la=all.map(p=>p[0]),lo=all.map(p=>p[1]),pad=0.05,x0=Math.min(...la)-pad,x1=Math.max(...la)+pad,y0=Math.min(...lo)-pad,y1=Math.max(...lo)+pad;
+  const pool=S.acc.filter(x=>x.lat>=x0&&x.lat<=x1&&x.lon>=y0&&x.lon<=y1),cs=levelize(cells(pool,0.05));
+  cs.forEach(h=>{
+    const col=h.lvl==='high'?'#C5352B':(h.lvl==='mid'?'#E09F1F':'#23804F');
+    const c=L.circle([h.lat,h.lon],{radius:1500+3500*Math.sqrt(h.q),color:col,weight:2,fillColor:col,fillOpacity:.45}).addTo(layer);
+    c.on('click',()=>showHot(h));
+  });
+  L.circleMarker([S.from.lat,S.from.lon],{radius:9,color:'#13222B',weight:3,fillColor:'#F2B705',fillOpacity:1}).bindTooltip('Start: '+S.from.name).addTo(layer);
+  L.circleMarker([S.to.lat,S.to.lon],{radius:9,color:'#13222B',weight:3,fillColor:'#F2B705',fillOpacity:1}).bindTooltip('End: '+S.to.name).addTo(layer);
+  map.invalidateSize();map.fitBounds(L.latLngBounds(all),{padding:[24,24]});
+}
+
+/* ---------- cost ---------- */
+function setVeh(id){S.veh=id;$('#veh').value=id;$('#vehPlan').value=id;syncCostInputs();renderRoutes();renderCost()}
+function syncCostInputs(){const v=vehById(S.veh),o=S.ov[v.id]||{};$('#eff').value=o.eff!=null?o.eff:v.eff;$('#tollRate').value=o.toll!=null?o.toll:v.toll;$('#effL').textContent=(v.en==='elec'?'Efficiency':'Mileage')+' ('+unit(v)+')'}
+function initCost(){
+  fillSelect($('#veh'),VEH.map(v=>[v.id,v.name]),S.veh);fillSelect($('#vehPlan'),VEH.map(v=>[v.id,v.name]),S.veh);
+  $('#veh').addEventListener('change',e=>setVeh(e.target.value));$('#vehPlan').addEventListener('change',e=>setVeh(e.target.value));
+  $('#costRoute').addEventListener('change',e=>{S.sel=+e.target.value;renderRoutes();drawMap();renderCost();hotIntro()});
+  const onNum=(id,fn)=>$(id).addEventListener('input',e=>{const n=parseFloat(e.target.value);if(!isNaN(n)){fn(n);renderRoutes();renderCost()}});
+  [['petrol','#pPetrol'],['diesel','#pDiesel'],['elec','#pElec']].forEach(([k,id])=>{$(id).value=S.price[k];onNum(id,n=>{if(n>=0)S.price[k]=n})});
+  onNum('#eff',n=>{if(n>0)(S.ov[S.veh]=S.ov[S.veh]||{}).eff=n});onNum('#tollRate',n=>{if(n>=0)(S.ov[S.veh]=S.ov[S.veh]||{}).toll=n});
+  $('#dist').addEventListener('input',renderCost);$('#tollShare').addEventListener('input',()=>{renderRoutes();renderCost()});
+  syncCostInputs();
+}
+function renderCost(){
+  const rs=S.routes;
+  $('#costRoute').innerHTML=rs.length?rs.map((x,i)=>`<option value="${i}"${i===S.sel?' selected':''}>${esc(x.name)} (${Math.round(x.km)} km)</option>`).join(''):'<option>No route yet. Using distance below.</option>';
+  const active=document.activeElement;if(rs.length&&active!==$('#dist'))$('#dist').value=Math.round(rs[S.sel].km);
+  const km=parseFloat($('#dist').value)||0,share=tollShare(),v=vehById(S.veh),c=costOf(v,km,share),label=v.en==='elec'?'Electricity':(v.en==='diesel'?'Diesel':'Petrol'),qty=(km/c.eff).toFixed(1)+(v.en==='elec'?' kWh':' l');
+  $('#costOut').innerHTML=`<div class="lbl">Estimated total</div><div class="big">${inr(c.total)}</div><p class="small">${Math.round(km)} km${rs.length?', '+hm(rs[S.sel].min)+' average time':''}</p><div class="brk"><span>${label} (${qty} at ₹${c.price})</span><span class="v">${inr(c.energy)}</span><span>Toll (${Math.round(share*100)}% tolled at ₹${c.tr}/km)</span><span class="v">${inr(c.toll)}</span><span>Per km</span><span class="v">₹${km?(c.total/km).toFixed(2):'0.00'}</span></div>`;
+  $('#costTable').innerHTML='<thead><tr><th>Vehicle</th><th class="n">Energy</th><th class="n">Toll</th><th class="n">Total</th></tr></thead><tbody>'+VEH.map(x=>{const k=costOf(x,km,share);return `<tr${x.id===v.id?' class="sel"':''}><td>${esc(x.name)}</td><td class="n">${inr(k.energy)}</td><td class="n">${inr(k.toll)}</td><td class="n">${inr(k.total)}</td></tr>`}).join('')+'</tbody>';
+}
+
+/* ---------- nearby services (OpenStreetMap via Overpass) ---------- */
+const STYPES=[{id:'hospital',label:'Hospital',ic:'H',q:'["amenity"="hospital"]'},{id:'medical',label:'Medical store',ic:'+',q:'["amenity"="pharmacy"]'},{id:'police',label:'Police station',ic:'P',q:'["amenity"="police"]'},{id:'petrol',label:'Petrol bunk',ic:'F',q:'["amenity"="fuel"]'},{id:'tyre',label:'Tyre mechanic',ic:'T',q:'["shop"="tyres"]'}];
+let myPos=null;
+function whereOptions(){const o=[];if(S.from){const mid=S.routes.length?S.routes[S.sel].dense[Math.floor(S.routes[S.sel].dense.length/2)]:null;o.push(['from','Start: '+S.from.name]);if(mid)o.push(['mid','Midpoint of selected route']);o.push(['to','Destination: '+S.to.name])}o.push(['me','My location (asks first)']);return o}
+function centerFor(k){if(k==='from')return S.from;if(k==='to')return S.to;if(k==='mid'){const d=S.routes[S.sel].dense,p=d[Math.floor(d.length/2)];return {lat:p[0],lon:p[1],name:'route midpoint'}}return myPos}
+function askLocation(boxSel,then){
+  const box=$(boxSel);
+  box.innerHTML='<div class="disc"><p style="margin-bottom:10px"><b>Allow this page to read your location once?</b></p><div class="row"><button class="btn pri sm" data-y="1" type="button">Yes, read my location</button><button class="btn sm" data-n="1" type="button">Cancel</button></div></div>';
+  $('[data-n]',box).onclick=()=>box.innerHTML='';
+  $('[data-y]',box).onclick=()=>{
+    box.innerHTML='<p class="hint">Reading location…</p>';
+    if(!navigator.geolocation){box.innerHTML='<p class="err">Location is not available on this device.</p>';return}
+    navigator.geolocation.getCurrentPosition(p=>{myPos={lat:p.coords.latitude,lon:p.coords.longitude,name:'your location'};box.innerHTML='';then()},()=>{box.innerHTML='<p class="err">Location could not be read. Allow location for this site in your browser, or pick another place.</p>'},{timeout:10000});
+  };
+}
+async function loadServices(c,radius,types,out){
+  out.innerHTML='<p class="hint">Searching OpenStreetMap…</p>';
+  const parts=STYPES.filter(t=>types[t.id]).map(t=>`nwr(around:${radius},${c.lat},${c.lon})${t.q};`).join('');
+  if(!parts){out.innerHTML='<p class="hint">Select at least one service type.</p>';return}
+  try{
+    const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(`[out:json][timeout:25];(${parts});out center tags 120;`),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+    const j=await r.json(),items=[];
+    j.elements.forEach(e=>{
+      const t=STYPES.find(t=>{const m=t.q.match(/"([^"]+)"="([^"]+)"/);return e.tags&&e.tags[m[1]]===m[2]});if(!t)return;
+      const la=e.lat!=null?e.lat:(e.center&&e.center.lat),lo=e.lon!=null?e.lon:(e.center&&e.center.lon);if(la==null)return;
+      items.push({t,name:e.tags.name||'Unnamed '+t.label.toLowerCase(),d:hav(c.lat,c.lon,la,lo),phone:e.tags.phone||e.tags['contact:phone']||null,la,lo});
+    });
+    items.sort((a,b)=>a.d-b.d);
+    out.innerHTML=items.length?items.slice(0,40).map(s=>`<div class="svc"><span class="ic t-${s.t.id}" aria-hidden="true">${s.t.ic}</span><div><b>${esc(s.name)}</b><span class="hint">${esc(s.t.label)}</span><span class="hint" style="display:block">Contact: ${s.phone?esc(s.phone):'not listed in map data'}</span><a class="hint" href="https://www.openstreetmap.org/?mlat=${s.la}&mlon=${s.lo}#map=17/${s.la}/${s.lo}" target="_blank" rel="noopener">Open on map</a></div><span class="d">${s.d.toFixed(1)} km</span></div>`).join(''):'<p class="hint">Nothing found in this radius. Try a larger radius.</p>';
+  }catch(e){out.innerHTML='<p class="err">The places service did not respond. Wait a moment and try again.</p>'}
+}
+function initNearby(){
+  $('#types').innerHTML=STYPES.map(t=>`<button class="chip" type="button" data-t="${t.id}" aria-pressed="true">${esc(t.label)}</button>`).join('');
+  $$('#types .chip').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.t;S.types[id]=S.types[id]?0:1;b.setAttribute('aria-pressed',S.types[id]?'true':'false')}));
+  $('#svcGo').addEventListener('click',()=>{
+    const k=$('#svcWhere').value,go=()=>{const c=centerFor(k);$('#svcTitle').textContent='Near '+c.name;loadServices(c,+$('#svcR').value,S.types,$('#svcList'))};
+    if(k==='me'&&!myPos)askLocation('#svcLoc',go);else go();
+  });
+  $('#sosGo').addEventListener('click',()=>{
+    const k=$('#sosWhere').value,go=()=>{loadServices(centerFor(k),5000,{hospital:1,police:1},$('#sosSvc'))};
+    if(k==='me'&&!myPos)askLocation('#sosSvc',go);else go();
+  });
+}
+function renderWhere(){const o=whereOptions();fillSelect($('#svcWhere'),o,o[0][0]);fillSelect($('#sosWhere'),o,o[0][0])}
+
+/* ---------- SOS ---------- */
+const NUMS=[['112','National emergency number'],['108','Ambulance and medical emergency (most states)'],['100','Police'],['101','Fire'],['1033','National highway helpline']];
+const CHECKS=['Move to a safe place away from traffic and switch on hazard lights.','Call 112 or 108 and say where you are, using a landmark or kilometre marker.','Do not move a seriously injured person unless there is fire or immediate danger.','Press firmly on bleeding with a clean cloth. Keep the person warm and talking.','Give nothing to eat or drink to an injured person.','Note vehicle numbers and take photos only if it is safe.','Stay on the line until the operator ends the call.','Bystanders who help in good faith are protected under India’s Good Samaritan provisions.'];
+function initSos(){
+  $('#nums').innerHTML=NUMS.map(n=>`<div class="num"><span class="n112">${n[0]}</span><span>${esc(n[1])}</span><button class="btn sos sm" type="button" data-call="${n[0]}">Call</button><div class="cf" hidden></div></div>`).join('');
+  $('#nums').addEventListener('click',e=>{
+    const b=e.target.closest('[data-call]'),x=e.target.closest('[data-cancel]'),d=e.target.closest('[data-dial]');
+    if(b){const cf=$('.cf',b.closest('.num'));cf.hidden=false;cf.innerHTML=`<p style="margin-bottom:10px"><b>Open your phone dialer for ${b.dataset.call}?</b></p><div class="row"><a class="btn sos sm" data-dial="1" href="tel:${b.dataset.call}">Yes, open dialer</a><button class="btn sm" type="button" data-cancel="1">Cancel</button></div>`}
+    if(x){const c=x.closest('.cf');c.hidden=true;c.innerHTML=''}
+    if(d){const c=d.closest('.cf');if(!$('.small',c)){const p=document.createElement('p');p.className='small';p.textContent='If your dialer did not open, dial '+d.getAttribute('href').slice(4)+' by hand.';c.appendChild(p)}}
+  });
+  $('#checks').innerHTML=CHECKS.map((t,i)=>`<label class="check"><input type="checkbox" id="ck${i}"><span>${esc(t)}</span></label>`).join('');
+  locStep('idle');
+}
+function locStep(s,data){
+  const box=$('#locBox');
+  if(s==='idle'){box.innerHTML='<p style="margin-bottom:12px">Create a message with your location to send to family or a responder. Your location is read only after you confirm, and nothing is sent automatically.</p><button class="btn pri" id="locAsk" type="button">Share my location</button>';$('#locAsk').onclick=()=>locStep('confirm')}
+  else if(s==='confirm'){
+    box.innerHTML='<p style="margin-bottom:12px"><b>Allow this page to read your location once?</b> You then choose where to send the message.</p><div class="row"><button class="btn pri" id="locYes" type="button">Yes, read my location</button><button class="btn" id="locNo" type="button">Cancel</button></div>';
+    $('#locNo').onclick=()=>locStep('idle');
+    $('#locYes').onclick=()=>{
+      box.innerHTML='<p>Reading location…</p>';
+      if(!navigator.geolocation){locStep('manual','Location is not available on this device.');return}
+      navigator.geolocation.getCurrentPosition(p=>locStep('done',{la:p.coords.latitude,lo:p.coords.longitude,acc:Math.round(p.coords.accuracy)}),()=>locStep('manual','Location could not be read.'),{timeout:10000,maximumAge:0});
+    };
+  }else if(s==='manual'){
+    box.innerHTML=`<p style="margin-bottom:10px">${esc(data)} Type where you are and the message will be written for you.</p><div class="field"><label for="manLoc">Landmark, road or kilometre marker</label><input id="manLoc" type="text" placeholder="e.g. NH48 near Vellore toll plaza"></div><div class="row"><button class="btn pri" id="manGo" type="button">Create message</button><button class="btn" id="manBack" type="button">Back</button></div>`;
+    $('#manBack').onclick=()=>locStep('idle');$('#manGo').onclick=()=>{const v=$('#manLoc').value.trim();if(v)locStep('done',{text:v})};
+  }else{
+    const msg='I need help. My location: '+(data.text?data.text:`https://maps.google.com/?q=${data.la.toFixed(5)},${data.lo.toFixed(5)} (accuracy about ${data.acc} m)`)+'. Sent from Suraksha Yatra.';
+    box.innerHTML=`<p style="margin-bottom:10px">Message ready. Copy it and paste it into your messaging app.</p><div class="msgbox" id="msgBox">${esc(msg)}</div><div class="row" style="margin-top:12px"><button class="btn pri" id="msgCopy" type="button">Copy message</button><button class="btn" id="msgDone" type="button">Start over</button></div>`;
+    $('#msgCopy').onclick=function(){copyText(msg,$('#msgBox'),this)};$('#msgDone').onclick=()=>locStep('idle');
+  }
+}
+
+/* ---------- accident CSV ---------- */
+function parseCSV(t){
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===','){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';if(row.some(x=>x.trim()))rows.push(row);row=[]}else f+=c}
+  row.push(f);if(row.some(x=>x.trim()))rows.push(row);return rows;
+}
+function mapVeh(s){s=(s||'').toLowerCase();if(/two|2w|bike|motorcycle|scooter|moped/.test(s))return 'Two-wheeler';if(/three|3w|auto|rickshaw/.test(s))return 'Three-wheeler';if(/bus/.test(s))return 'Bus';if(/truck|lorry|heavy|goods|tractor|trailer/.test(s))return 'Heavy vehicle';if(/car|jeep|van|taxi|suv|four|4w/.test(s))return 'Car';return 'Other'}
+function mapRoad(s){s=(s||'').toLowerCase();if(/\bnh\b|national/.test(s))return 'National Highway';if(/\bsh\b|state/.test(s))return 'State Highway';if(/urban|city|town|municipal/.test(s))return 'Urban road';if(/ghat|bypass|hill/.test(s))return 'Ghat / bypass';return 'Other'}
+function loadCSVText(text,name){
+  const rows=parseCSV(text);if(rows.length<2)throw new Error('The file has no data rows.');
+  const h=rows[0].map(x=>x.trim().toLowerCase()),ix=names=>h.findIndex(x=>names.includes(x));
+  const iLa=ix(['lat','latitude']),iLo=ix(['lon','lng','long','longitude']),iH=ix(['hour']),iT=ix(['time','datetime','date_time','timestamp']),iS=ix(['severity','injury','outcome']),iV=ix(['vehicle','vehicle_type']),iR=ix(['road_type','road','roadtype']),iC=ix(['city','district']),iL=ix(['location','name','place']);
+  if(iLa<0||iLo<0)throw new Error('Needs lat and lon columns.');
+  const out=[];
+  rows.slice(1).forEach(r=>{
+    const la=parseFloat(r[iLa]),lo=parseFloat(r[iLo]);if(isNaN(la)||isNaN(lo))return;
+    let hr=iH>=0?parseInt(r[iH],10):NaN;if(isNaN(hr)&&iT>=0){const m=(r[iT]||'').match(/(\d{1,2}):\d{2}/);if(m)hr=+m[1]}if(isNaN(hr)||hr<0||hr>23)hr=12;
+    const s=(iS>=0?r[iS]:'').toLowerCase(),sev=/fatal|kill|death|dead|^3$/.test(s)?2:(/grievous|serious|major|^2$/.test(s)?1:0);
+    out.push({lat:la,lon:lo,hour:hr,sev,veh:mapVeh(iV>=0?r[iV]:''),road:mapRoad(iR>=0?r[iR]:''),city:(iC>=0&&r[iC]&&r[iC].trim())||'All records',loc:iL>=0?(r[iL]||'').trim():'',sample:false});
+  });
+  if(!out.length)throw new Error('No rows with valid coordinates were found.');
+  S.acc=out;S.real=true;S.fileName=name;
+}
+function afterData(){
+  banner();refreshAnalyticsFilters();renderAnalytics();
+  if(S.routes.length){S.routes.forEach(rt=>rt.st=rstats(rt));let b=0;S.routes.forEach((r,i)=>{if(r.st.score<S.routes[b].st.score)b=i});S.sel=b;renderRoutes();drawMap();renderCost();hotIntro()}
+}
+function banner(){
+  $('#banner').innerHTML=S.real?`<b>Using ${S.acc.length.toLocaleString('en-IN')} accident records from ${esc(S.fileName)}.</b> Risk scores are indicative and do not guarantee road safety. Times are estimated averages, not live traffic.`
+    :'<b>Accident data shown is generated sample data.</b> Load a real accident CSV in the Analytics tab to replace it. Risk scores are indicative and do not guarantee road safety. Times are estimated averages, not live traffic.';
+}
+
+/* ---------- analytics ---------- */
+const TODS=[['all','All day'],['morning','Morning 05:00–11:59'],['afternoon','Afternoon 12:00–16:59'],['evening','Evening 17:00–20:59'],['night','Night 21:00–04:59']];
+const inTod=(h,t)=>t==='all'||(t==='morning'&&h>=5&&h<12)||(t==='afternoon'&&h>=12&&h<17)||(t==='evening'&&h>=17&&h<21)||(t==='night'&&(h>=21||h<5));
+function refreshAnalyticsFilters(){
+  const cities=[...new Set(S.acc.map(x=>x.city))].sort(),cur=$('#aCorr').value;
+  fillSelect($('#aCorr'),[['all','All cities']].concat(cities.map(c=>[c,c])),cities.includes(cur)?cur:'all');
+}
+function initAnalytics(){
+  fillSelect($('#aTod'),TODS,'all');fillSelect($('#aVeh'),[['all','All vehicles']].concat(VEHT.map(v=>[v,v])),'all');refreshAnalyticsFilters();
+  ['#aCorr','#aTod','#aVeh'].forEach(id=>$(id).addEventListener('change',renderAnalytics));
+  $('#csv').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+    rd.onload=()=>{try{loadCSVText(String(rd.result),f.name);$('#csvMsg').className='hint';$('#csvMsg').textContent='Loaded '+S.acc.length.toLocaleString('en-IN')+' records from '+f.name+'.';afterData()}catch(err){$('#csvMsg').className='err';$('#csvMsg').textContent=err.message}};
+    rd.readAsText(f);
+  });
+}
+function barsH(el,rows,max){let h='';rows.forEach((r,i)=>{const y=10+i*36,w=max?(480-118-44)*r[1]/max:0;h+=`<text x="110" y="${y+16}" text-anchor="end" style="fill:var(--ink);font:12px var(--body)">${esc(r[0])}</text><rect x="118" y="${y}" width="${Math.max(w,1).toFixed(1)}" height="24" rx="3" fill="var(--accent)"/><text x="${(118+w+6).toFixed(1)}" y="${y+16}">${r[1]}</text>`});el.innerHTML=h}
+function renderAnalytics(){
+  const c=$('#aCorr').value,t=$('#aTod').value,v=$('#aVeh').value;
+  const recs=S.acc.filter(x=>(c==='all'||x.city===c)&&inTod(x.hour,t)&&(v==='all'||x.veh===v));
+  const fatal=recs.filter(x=>x.sev===2).length,night=recs.filter(x=>x.hour>=21||x.hour<5).length;
+  $('#kpis').innerHTML=`<div class="card"><b>${recs.length.toLocaleString('en-IN')}</b><span>${S.real?'records':'sample records'}</span></div><div class="card"><b>${recs.length?Math.round(fatal/recs.length*100):0}%</b><span>fatal (${fatal})</span></div><div class="card"><b>${recs.length?Math.round(night/recs.length*100):0}%</b><span>at night, 21:00–05:00</span></div>`;
+  const hrs=Array(24).fill(0);recs.forEach(x=>hrs[x.hour]++);
+  const mx=Math.max(1,...hrs),pk=hrs.indexOf(Math.max(...hrs)),Wd=480,Ht=220,L=34,B=24,T=14,bw=(Wd-L-6)/24;let hs='';
+  [0,0.5,1].forEach(f=>{const y=T+(Ht-T-B)*(1-f);hs+=`<line class="gl" x1="${L}" x2="${Wd-6}" y1="${y}" y2="${y}"/><text x="${L-5}" y="${y+4}" text-anchor="end">${Math.round(mx*f)}</text>`});
+  hrs.forEach((n,i)=>{const bh=(Ht-T-B)*n/mx,x=L+i*bw+1;hs+=`<rect x="${x.toFixed(1)}" y="${(Ht-B-bh).toFixed(1)}" width="${(bw-2).toFixed(1)}" height="${bh.toFixed(1)}" fill="${i===pk&&n>0?'var(--mile)':'var(--accent)'}"><title>${hh(i)}: ${n}</title></rect>`;if(i%3===0)hs+=`<text x="${(x+bw/2-1).toFixed(1)}" y="${Ht-8}" text-anchor="middle">${i<10?'0':''}${i}</text>`});
+  if(recs.length)hs+=`<text x="${Wd-6}" y="10" text-anchor="end" style="fill:var(--ink)">Peak ${hh(pk)} (${hrs[pk]})</text>`;
+  $('#hourChart').innerHTML=hs;
+  const rc=ROADS.map(r=>[r,recs.filter(x=>x.road===r).length]).filter(r=>r[1]>0||r[0]!=='Other');
+  barsH($('#roadChart'),rc,Math.max(1,...rc.map(r=>r[1])));
+  const top=cells(recs,0.05).sort((a,b)=>b.w-a.w).slice(0,10),mw=top.length?top[0].w:1;
+  $('#topTable').innerHTML='<thead><tr><th>#</th><th>Location</th><th class="n">Records</th><th class="n">Fatal</th><th>Peak hour</th><th>Level</th></tr></thead><tbody>'+(top.length?top.map((h,i)=>{const q=h.w/mw,lv=q>=0.6?['High','hi']:(q>=0.3?['Medium','md']:['Lower','lo']),loc=topKey(h.loc)||h.lat.toFixed(3)+', '+h.lon.toFixed(3);return `<tr><td>${i+1}</td><td>${esc(loc)}</td><td class="n">${h.n}</td><td class="n">${h.f}</td><td>${hh(+topKey(h.hr))}</td><td><span class="pill ${lv[1]}">${lv[0]}</span></td></tr>`}).join(''):'<tr><td colspan="6">No records match these filters.</td></tr>')+'</tbody>';
+}
+
+/* ---------- tabs and boot ---------- */
+const TABS=['plan','cost','nearby','sos','analytics'];
+function showTab(){
+  let h=location.hash.slice(1);if(!TABS.includes(h))h='plan';
+  TABS.forEach(t=>$('#tab-'+t).hidden=t!==h);
+  $$('.tabs a').forEach(a=>a.getAttribute('href')==='#'+h?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
+  if(h==='plan'&&map)setTimeout(()=>{map.invalidateSize();if(S.routes.length)drawMap()},50);
+  window.scrollTo(0,0);
+}
+function renderAll(){renderRoutes();drawMap();renderCost();renderWhere();hotIntro()}
+initMap();initCost();initNearby();initSos();initAnalytics();banner();renderAll();renderAnalytics();
+$('#go').addEventListener('click',findRoutes);
+['#fromQ','#toQ'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')findRoutes()}));
+addEventListener('hashchange',showTab);showTab();
+fetch('accidents.csv').then(r=>r.ok?r.text():Promise.reject()).then(t=>{loadCSVText(t,'accidents.csv');afterData()}).catch(()=>{});
+})();
+});
+</script>
+</body>
+</html>
