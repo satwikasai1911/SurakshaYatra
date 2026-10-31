@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Suraksha Yatra</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#EDF0F2; --surface:#FFFFFF; --surface2:#E2E8EC; --ink:#13222B; --muted:#4F626E; --line:#C9D3D9;
+  --accent:#0B5CAD; --accent-ink:#FFFFFF; --mile:#F2B705; --low:#23804F; --mid:#C98200; --high:#C5352B; --sos:#C5352B;
+  --display:'Barlow Semi Condensed','Arial Narrow',Arial,sans-serif; --body:'Public Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0E161B; --surface:#16222A; --surface2:#1F2E37; --ink:#E7EEF2; --muted:#9FB2BD; --line:#2B3C46;
+  --accent:#5AA7F0; --accent-ink:#08131B; --mile:#F2C230; --low:#4CC38A; --mid:#F0B040; --high:#FF7468; color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px))}
+h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0;text-wrap:balance}
+h2{font-size:22px;font-weight:700;letter-spacing:.01em}
+h3{font-size:17px;font-weight:600}
+p{margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding-top:14px}
+.top{position:sticky;top:0;z-index:1000;background:var(--bg);border-bottom:1px solid var(--line);padding-top:10px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1040px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;font:700 24px/1 var(--display)}
+.stone{width:26px;height:30px;background:var(--mile);border-radius:13px 13px 3px 3px;display:grid;place-items:end center;padding-bottom:3px;color:#1B1500;font:600 10px var(--mono)}
+.sosbtn{background:var(--sos);color:#fff;border-radius:8px;padding:8px 16px;font:700 17px/1.2 var(--display);letter-spacing:.08em;text-decoration:none;min-height:40px;display:inline-flex;align-items:center}
+.tabs{display:flex;gap:2px;overflow-x:auto;max-width:1040px;margin:6px auto 0;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{flex:0 0 auto;padding:10px 14px;font:600 17px/1 var(--display);letter-spacing:.02em;color:var(--muted);text-decoration:none;border-bottom:3px solid transparent;min-height:44px;display:flex;align-items:center}
+.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
+.note{font-size:13.5px;color:var(--muted);background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:16px}
+.note b{color:var(--ink)}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.split{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+@media (min-width:880px){.split{grid-template-columns:minmax(0,380px) minmax(0,1fr)}.split.even{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.card>h2{margin-bottom:12px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+label,.lbl{font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+select,input[type=number],input[type=text],input[type=file]{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hint{font-size:13px;color:var(--muted)}
+.btn{font:600 15px/1 var(--body);min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.sos{background:var(--sos);color:#fff;border-color:transparent}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px}
+.btn[disabled]{opacity:.6;cursor:wait}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.grid3{grid-template-columns:minmax(0,1fr)}}
+.route{display:block;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:14px;cursor:pointer;position:relative}
+.route input{position:absolute;opacity:0;pointer-events:none}
+.route:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.route:has(input:focus-visible){outline:3px solid var(--accent);outline-offset:2px}
+.rhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.rname{font:700 20px var(--display)}
+.badge{font:600 12px/1 var(--body);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:6px;background:var(--low);color:#fff}
+@media (prefers-color-scheme: dark){.badge{color:#06140D}}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.stats b{display:block;font:600 19px/1.2 var(--display);font-variant-numeric:tabular-nums}
+.stats span span{font-size:12px;color:var(--muted)}
+.rl{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:5px}
+.meter{display:block;height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.meter i{display:block;height:100%;border-radius:4px}
+.lo{color:var(--low)}.md{color:var(--mid)}.hi{color:var(--high)}
+.fl-lo{background:var(--low)}.fl-md{background:var(--mid)}.fl-hi{background:var(--high)}
+.small{font-size:12.5px;color:var(--muted);display:block;margin-top:6px}
+#map{height:430px;border-radius:8px;border:1px solid var(--line);z-index:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.disc{font-size:13px;border:1px dashed var(--line);border-radius:8px;padding:10px 12px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px;margin:10px 0 0}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font-variant-numeric:tabular-nums}
+.big{font:700 40px/1 var(--display);font-variant-numeric:tabular-nums}
+.brk{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin-top:12px;font-size:14.5px}
+.brk .v{text-align:right;font-family:var(--mono);font-size:14px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.n,th.n{text-align:right}
+tr.sel td{background:var(--surface2);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 14px var(--body);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.svc{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line)}
+.svc:last-child{border-bottom:0}
+.ic{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;font:700 16px var(--display);color:#fff}
+.t-hospital{background:#C5352B}.t-medical{background:#23804F}.t-police{background:#0B5CAD}.t-petrol{background:#8A5A00}.t-tyre{background:#4F626E}
+.svc b{display:block}
+.svc .d{font-family:var(--mono);font-size:13px;color:var(--muted);white-space:nowrap}
+.svc a{color:var(--accent)}
+.num{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.num:last-child{border-bottom:0}
+.num .n112{font:700 34px/1 var(--display);color:var(--sos);min-width:74px;font-variant-numeric:tabular-nums}
+.num .cf{grid-column:1/-1;background:var(--surface2);border-radius:8px;padding:12px}
+.msgbox{font-family:var(--mono);font-size:13.5px;background:var(--surface2);border-radius:8px;padding:12px;white-space:pre-wrap;word-break:break-word;user-select:all}
+.check{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.check:last-child{border-bottom:0}
+.check input{width:22px;height:22px;margin-top:2px;flex:0 0 auto;accent-color:var(--accent)}
+.check input:checked+span{color:var(--muted);text-decoration:line-through}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.kpis .card{padding:12px 14px}
+.kpis b{display:block;font:700 28px/1.1 var(--display)}
+.kpis span{font-size:12.5px;color:var(--muted)}
+.chart text{fill:var(--muted);font:11px var(--mono)}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;color:#fff}
+.pill.hi{background:var(--high)}.pill.md{background:var(--mid);color:#1B1200}.pill.lo{background:var(--low)}
+@media (prefers-color-scheme: dark){.pill.hi,.pill.lo{color:#06100A}}
+.err{color:var(--high);font-size:14px}
+footer{margin-top:28px;font-size:13px;color:var(--muted);display:grid;gap:8px}
+footer h3{color:var(--ink)}
+footer a{color:var(--accent)}
+.leaflet-container{font-family:var(--body)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="bar">
+    <div class="brand"><span class="stone" aria-hidden="true">km</span>Suraksha Yatra</div>
+    <a class="sosbtn" href="#sos" aria-label="Open SOS emergency help">SOS</a>
+  </div>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#plan">Plan route</a><a href="#cost">Trip cost</a><a href="#nearby">Nearby help</a><a href="#sos">SOS</a><a href="#analytics">Analytics</a>
+  </nav>
+</div>
+
+<main class="wrap">
+  <p class="note" id="banner"></p>
+
+  <section id="tab-plan" aria-label="Plan route">
+    <div class="split">
+      <div class="stack">
+        <div class="card">
+          <h2>Plan a trip</h2>
+          <div class="field"><label for="fromQ">From</label><input id="fromQ" type="text" value="Chennai" autocomplete="off"></div>
+          <div class="field"><label for="toQ">To</label><input id="toQ" type="text" value="Bengaluru" autocomplete="off"></div>
+          <div class="field"><label for="vehPlan">Vehicle for cost estimate</label><select id="vehPlan"></select></div>
+          <div class="row"><button class="btn pri" id="go" type="button">Find routes</button><span class="hint" id="status" aria-live="polite"></span></div>
+        </div>
+        <div id="routes" class="stack" role="radiogroup" aria-label="Available routes"></div>
+        <div id="reco" class="card" aria-live="polite" hidden></div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <h2>Routes and accident hotspots</h2>
+          <div id="map" role="application" aria-label="Interactive map of routes and accident hotspots"></div>
+          <div class="legend">
+            <span><i class="dot" style="background:var(--high)"></i>High</span>
+            <span><i class="dot" style="background:var(--mid)"></i>Medium</span>
+            <span><i class="dot" style="background:var(--low)"></i>Lower</span>
+            <span>Hotspot colours rank clusters inside the map area. Tap a circle for details.</span>
+          </div>
+        </div>
+        <div id="hotdetail" class="card" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-cost" aria-label="Trip cost" hidden>
+    <div class="split">
+      <div class="stack">
+        <div class="card">
+          <h2>Trip cost estimate</h2>
+          <div class="field"><label for="costRoute">Route</label><select id="costRoute"></select></div>
+          <div class="grid2">
+            <div class="field"><label for="dist">Distance (km)</label><input id="dist" type="number" min="1" step="1" inputmode="decimal" value="350"></div>
+            <div class="field"><label for="tollShare">Tolled share of route %</label><input id="tollShare" type="number" min="0" max="100" step="5" inputmode="decimal" value="50"></div>
+          </div>
+          <div class="field"><label for="veh">Vehicle type</label><select id="veh"></select></div>
+          <div class="grid2">
+            <div class="field"><label for="eff" id="effL">Mileage</label><input id="eff" type="number" min="0.1" step="0.1" inputmode="decimal"></div>
+            <div class="field"><label for="tollRate">Toll ₹ per km</label><input id="tollRate" type="number" min="0" step="0.1" inputmode="decimal"></div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label for="pPetrol">Petrol ₹/l</label><input id="pPetrol" type="number" min="0" step="0.5" inputmode="decimal"></div>
+            <div class="field"><label for="pDiesel">Diesel ₹/l</label><input id="pDiesel" type="number" min="0" step="0.5" inputmode="decimal"></div>
+            <div class="field"><label for="pElec">Power ₹/kWh</label><input id="pElec" type="number" min="0" step="0.5" inputmode="decimal"></div>
+          </div>
+          <p class="hint">Prices and toll rates are editable assumptions. Enter today's local figures for a closer estimate.</p>
+        </div>
+        <div class="card" id="costOut" aria-live="polite"></div>
+      </div>
+      <div class="card">
+        <h2>All vehicle types, same trip</h2>
+        <div class="tw"><table id="costTable"></table></div>
+        <p class="small">Toll = distance × tolled share × rate per km. Two- and three-wheelers are set to ₹0 as an assumption. Real plaza charges differ by plaza, vehicle class and pass.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-nearby" aria-label="Nearby help" hidden>
+    <div class="split">
+      <div class="stack">
+        <div class="card">
+          <h2>Find help nearby</h2>
+          <div class="field"><label for="svcWhere">Search around</label><select id="svcWhere"></select></div>
+          <div class="field"><label for="svcR">Radius</label><select id="svcR"><option value="3000">3 km</option><option value="5000" selected>5 km</option><option value="10000">10 km</option></select></div>
+          <div class="lbl" style="margin-bottom:8px">Show</div>
+          <div class="chips" id="types" role="group" aria-label="Service types"></div>
+          <div class="row" style="margin-top:14px"><button class="btn pri" id="svcGo" type="button">Search</button></div>
+          <div id="svcLoc" style="margin-top:12px"></div>
+        </div>
+        <p class="disc">Places come from OpenStreetMap. A phone number is shown only when the map data lists one. Many places have none, so call 112 in an emergency.</p>
+      </div>
+      <div class="card"><h2 id="svcTitle">Services</h2><div id="svcList"><p class="hint">Choose where to search and press Search.</p></div></div>
+    </div>
+  </section>
+
+  <section id="tab-sos" aria-label="SOS emergency help" hidden>
+    <div class="split even">
+      <div class="stack">
+        <div class="card">
+          <h2>Emergency numbers</h2>
+          <div id="nums"></div>
+          <p class="small">Nothing is dialled until you confirm. If your dialer does not open, dial the number by hand.</p>
+        </div>
+        <div class="card"><h2>Share my location</h2><div id="locBox"></div></div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <h2>Basic emergency checklist</h2>
+          <div id="checks"></div>
+          <p class="small">General guidance only. Follow the instructions of emergency operators and trained responders.</p>
+        </div>
+        <div class="card">
+          <h2>Nearest hospital and police</h2>
+          <div class="field"><label for="sosWhere">Near</label><select id="sosWhere"></select></div>
+          <div class="row"><button class="btn pri sm" id="sosGo" type="button">Find nearby</button></div>
+          <div id="sosSvc" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-analytics" aria-label="Accident analytics" hidden>
+    <div class="stack">
+      <div class="card">
+        <h2>Accident analytics</h2>
+        <div class="grid3">
+          <div class="field"><label for="aCorr">City</label><select id="aCorr"></select></div>
+          <div class="field"><label for="aTod">Time of day</label><select id="aTod"></select></div>
+          <div class="field"><label for="aVeh">Vehicle type</label><select id="aVeh"></select></div>
+        </div>
+        <div class="field" style="margin-top:4px"><label for="csv">Load your own accident CSV</label><input id="csv" type="file" accept=".csv,text/csv"></div>
+        <p class="hint" id="csvMsg">Columns: lat, lon, hour or time, severity, vehicle, road_type, city, location. See README for details.</p>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="split even">
+        <div class="card"><h3 style="margin-bottom:8px">Accidents by hour of day</h3><svg id="hourChart" class="chart" viewBox="0 0 480 220" role="img" aria-label="Bar chart of accidents by hour" style="width:100%;height:auto"></svg></div>
+        <div class="card"><h3 style="margin-bottom:8px">Accidents by road type</h3><svg id="roadChart" class="chart" viewBox="0 0 480 220" role="img" aria-label="Bar chart of accidents by road type" style="width:100%;height:auto"></svg></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:8px">Top 10 accident-prone locations</h3>
+        <div class="tw"><table id="topTable"></table></div>
+        <p class="small">Locations are 5 km grid clusters of the loaded records.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <h3>About the data and method</h3>
+    <p><b>Maps and places.</b> Map tiles © <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> and contributors. Place search and nearby places © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>. Routes come from the public OSRM demo server, which is meant for light use.</p>
+    <p><b>Accident data.</b> The page uses a CSV of real records when one is loaded. Without one it shows clearly labelled generated samples. Starting points for real data: <a href="https://data.gov.in/resource/states-wise-list-top-ten-black-spots-2016-2018" target="_blank" rel="noopener">state-wise top ten black spots (data.gov.in)</a> and the MoRTH report "Road Accidents in India".</p>
+    <p><b>Risk score.</b> Records within 2.5 km of a route are counted with weights (minor 1, grievous 2, fatal 3), divided by route length and mapped to 0–100. It compares routes against each other. It is indicative and does not guarantee safety.</p>
+    <p><b>Time.</b> Estimated average driving time from the routing service. It is not live traffic.</p>
+  </footer>
+</main>
+
+<script>
+function loadLeaflet(done){
+  var urls=['https://unpkg.com/leaflet@1.9.4/dist/leaflet.js','https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'],i=0;
+  (function next(){
+    if(window.L||i>=urls.length){done();return}
+    var s=document.createElement('script');s.src=urls[i++];s.onload=function(){done()};s.onerror=next;document.head.appendChild(s);
+  })();
+}
+loadLeaflet(function(){
+(function(){
+'use strict';
+const $=(s,e)=>(e||document).querySelector(s), $$=(s,e)=>[...(e||document).querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){let u=0,v=0;while(u===0)u=r();while(v===0)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function hav(a,b,c,d){const p=Math.PI/180,dl=(c-a)*p,dn=(d-b)*p,x=Math.sin(dl/2)**2+Math.cos(a*p)*Math.cos(c*p)*Math.sin(dn/2)**2;return 12742*Math.asin(Math.sqrt(x))}
+function nearKm(la,lo,pts){const k=Math.cos(la*Math.PI/180)*111.32;let m=1e9;for(const p of pts){const dx=(p[1]-lo)*k,dy=(p[0]-la)*110.57,d=dx*dx+dy*dy;if(d<m)m=d}return Math.sqrt(m)}
+const inr=n=>'₹'+(Math.round(n/5)*5).toLocaleString('en-IN');
+function hm(min){const t=Math.round(min),h=Math.floor(t/60),m=t%60;return h+' h '+(m<10?'0':'')+m+' m'}
+const hh=h=>(h<10?'0':'')+h+':00';
+function hash(s){let h=7;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h}
+function copyText(text,node,btn){
+  const done=()=>{if(btn){const o=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=o,1500)}};
+  const fb=()=>{try{const r=document.createRange();r.selectNodeContents(node);const s=getSelection();s.removeAllRanges();s.addRange(r)}catch(e){}if(btn)btn.textContent='Selected, press copy'};
+  try{navigator.clipboard.writeText(text).then(done,fb)}catch(e){fb()}
+}
+function fillSelect(el,items,val){el.innerHTML=items.map(i=>`<option value="${esc(i[0])}"${i[0]===val?' selected':''}>${esc(i[1])}</option>`).join('')}
+
+/* ---------- data model ---------- */
+const ROADS=['National Highway','State Highway','Urban road','Ghat / bypass','Other'];
+const VEHT=['Two-wheeler','Three-wheeler','Car','Heavy vehicle','Bus','Other'];
+const HW=[2,1.5,1.3,1.3,1.5,2.5,4,5.5,5.5,4.5,4,4,4.2,4,4,4.5,5.5,7,8,8,7,5.5,4,3],HS=HW.reduce((a,b)=>a+b,0);
+function baseHour(r){let x=r()*HS;for(let i=0;i<24;i++){x-=HW[i];if(x<=0)return i}return 23}
+function wpick(r,w){const s=w.reduce((a,b)=>a+b,0);let x=r()*s;for(let i=0;i<w.length;i++){x-=w[i];if(x<=0)return i}return w.length-1}
+const S={routes:[],sel:0,veh:'4w',price:{petrol:100,diesel:92,elec:8},ov:{},acc:[],real:false,fileName:'',from:null,to:null,types:{hospital:1,medical:1,police:1,petrol:1,tyre:1},label:''};
+
+function sampleRecords(label,routes,seed){
+  const r=rng(seed),recs=[],vb=[0.38,0.07,0.22,0.22,0.11,0.0],flip=r()<0.35;let cl=0;
+  routes.forEach((rt,ri)=>{
+    const div=((ri===0)!==flip)?28:64,nC=Math.max(2,Math.round(rt.km/div)),mix=ri===0?[0.6,0.15,0.15,0.1,0]:[0.25,0.5,0.15,0.1,0];
+    for(let k=0;k<nC;k++){
+      cl++;const ctr=rt.dense[Math.floor(rt.dense.length*(0.06+0.88*r()))],size=12+Math.floor(r()*24),peak=[7,9,13,18,19,21,22,23,1][Math.floor(r()*9)],road=wpick(r,mix),bias=Math.floor(r()*5),w=vb.slice();w[bias]+=0.35;
+      for(let j=0;j<size;j++){
+        const hour=r()<0.65?((Math.round(peak+gauss(r)*2)%24)+24)%24:baseHour(r),night=hour>=21||hour<5,p=r(),fp=night?0.2:0.1;
+        recs.push({lat:ctr[0]+gauss(r)*0.009,lon:ctr[1]+gauss(r)*0.009,hour,road:ROADS[road],veh:VEHT[wpick(r,w)],sev:p<fp?2:(p<fp+0.3?1:0),city:label,loc:label+' · sample cluster '+cl,sample:true});
+      }
+    }
+    for(let q=0;q<Math.round(rt.km/10);q++){
+      const cc=rt.dense[Math.floor(r()*rt.dense.length)],hr=baseHour(r),p2=r(),fp2=(hr>=21||hr<5)?0.2:0.1;
+      recs.push({lat:cc[0]+gauss(r)*0.012,lon:cc[1]+gauss(r)*0.012,hour:hr,road:ROADS[wpick(r,mix)],veh:VEHT[wpick(r,vb)],sev:p2<fp2?2:(p2<fp2+0.3?1:0),city:label,loc:label+' · scattered sample',sample:true});
+    }
+  });
+  return recs;
+}
+function cells(recs,size){
+  const m={};
+  recs.forEach(x=>{
+    const k=Math.floor(x.lat/size)+','+Math.floor(x.lon/size);let c=m[k];
+    if(!c)c=m[k]={n:0,w:0,f:0,la:0,lo:0,veh:{},hr:{},road:{},loc:{}};
+    c.n++;c.w+=x.sev+1;if(x.sev===2)c.f++;c.la+=x.lat;c.lo+=x.lon;
+    c.veh[x.veh]=(c.veh[x.veh]||0)+1;c.hr[x.hour]=(c.hr[x.hour]||0)+1;c.road[x.road]=(c.road[x.road]||0)+1;if(x.loc)c.loc[x.loc]=(c.loc[x.loc]||0)+1;
+  });
+  return Object.values(m).map(c=>(c.lat=c.la/c.n,c.lon=c.lo/c.n,c));
+}
+function levelize(cs){let mx=1;cs.forEach(c=>{if(c.w>mx)mx=c.w});cs.forEach(c=>{c.q=c.w/mx;c.lvl=c.q>=0.6?'high':(c.q>=0.3?'mid':'low')});return cs.filter(c=>c.q>=0.12)}
+function topKey(o){let b=null,v=-1;for(const k in o)if(o[k]>v){v=o[k];b=k}return b}
+const band=s=>s<35?{t:'Lower',c:'lo'}:(s<60?{t:'Moderate',c:'md'}:{t:'Higher',c:'hi'});
+
+/* default sample so Analytics works before any search */
+(function(){
+  const pts=[[13.0827,80.2707],[12.9675,79.9419],[12.9262,79.365],[12.9165,79.1325],[12.7904,78.7164],[12.5186,78.2137],[12.7409,77.8253],[12.9716,77.5946]];
+  const dense=[];for(let i=0;i<pts.length-1;i++){const n=Math.ceil(hav(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1])/1.5);for(let k=0;k<n;k++){const t=k/n;dense.push([pts[i][0]+(pts[i+1][0]-pts[i][0])*t,pts[i][1]+(pts[i+1][1]-pts[i][1])*t])}}
+  S.acc=sampleRecords('Chennai – Bengaluru (sample)',[{dense,km:350},{dense:dense.map(p=>[p[0]+0.05,p[1]-0.02]),km:330}],11);
+})();
+
+/* ---------- vehicles and cost ---------- */
+const VEH=[
+ {id:'2w',name:'Two-wheeler (petrol)',en:'petrol',eff:45,toll:0},{id:'3w',name:'Three-wheeler (auto, petrol)',en:'petrol',eff:30,toll:0},
+ {id:'4w',name:'Four-wheeler (petrol car)',en:'petrol',eff:15,toll:1.6},{id:'4d',name:'Four-wheeler (diesel car)',en:'diesel',eff:18,toll:1.6},
+ {id:'hv',name:'Heavy vehicle (truck, diesel)',en:'diesel',eff:4,toll:5.4},{id:'e2',name:'Electric two-wheeler',en:'elec',eff:30,toll:0},
+ {id:'e3',name:'Electric three-wheeler',en:'elec',eff:12,toll:0},{id:'e4',name:'Electric car',en:'elec',eff:6.5,toll:1.6}
+];
+const vehById=id=>VEH.find(v=>v.id===id), unit=v=>v.en==='elec'?'km/kWh':'km/l';
+function costOf(v,km,share){const o=S.ov[v.id]||{},eff=o.eff!=null?o.eff:v.eff,tr=o.toll!=null?o.toll:v.toll,price=S.price[v.en];const energy=km/eff*price,toll=km*share*tr;return{energy,toll,total:energy+toll,eff,tr,price}}
+const tollShare=()=>Math.min(1,Math.max(0,(parseFloat($('#tollShare').value)||0)/100));
+
+/* ---------- search, routing ---------- */
+async function fetchJSON(url,opts,ms){
+  /* No AbortSignal: some preview sandboxes proxy fetch via postMessage and cannot clone it. Timeout via Promise.race instead. */
+  let timer;
+  const timeout=new Promise((_,rej)=>{timer=setTimeout(()=>{const e=new Error('timed out');e.name='TimeoutError';rej(e)},ms||12000)});
+  try{
+    const r=await Promise.race([fetch(url,opts||undefined),timeout]);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return await r.json();
+  }finally{clearTimeout(timer)}
+}
+async function geocode(q){
+  if(!q)throw new Error('Please enter both a starting point and a destination.');
+  const notFound=()=>{const e=new Error('Could not find "'+q+'". Try adding the state, for example "Vellore, Tamil Nadu".');e.nf=true;return e};
+  const why=e=>e&&(e.name==='AbortError'||e.name==='TimeoutError')?'timed out':(e&&e.message)||'failed';
+  const tried=[],enc=encodeURIComponent(q);
+  const providers=[
+    ['Nominatim',async()=>{
+      const j=await fetchJSON('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=in&q='+enc,{headers:{'Accept':'application/json'}});
+      if(!j.length)return null;
+      return {lat:+j[0].lat,lon:+j[0].lon,name:j[0].display_name.split(',')[0],full:j[0].display_name};
+    }],
+    ['Photon',async()=>{
+      const j=await fetchJSON('https://photon.komoot.io/api/?limit=1&lang=en&bbox=68,6,98,36&q='+enc);
+      const f=j.features&&j.features[0];if(!f)return null;
+      const pr=f.properties||{};
+      return {lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],name:pr.name||q,full:[pr.name,pr.state,pr.country].filter(Boolean).join(', ')};
+    }],
+    ['Open-Meteo',async()=>{
+      const first=q.split(',')[0].trim();
+      const j=await fetchJSON('https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&country_code=IN&name='+encodeURIComponent(first));
+      const r=j.results&&j.results[0];if(!r)return null;
+      return {lat:r.latitude,lon:r.longitude,name:r.name,full:[r.name,r.admin1,r.country].filter(Boolean).join(', ')};
+    }]
+  ];
+  let reached=false;
+  for(const [label,fn] of providers){
+    try{
+      const res=await fn();reached=true;
+      if(res)return res;
+      tried.push(label+': no match');
+    }catch(e){console.warn('Geocoder '+label+' failed:',e);tried.push(label+': '+why(e))}
+  }
+  if(reached)throw notFound();
+  throw new Error('Place search is unreachable right now ('+tried.join('; ')+'). If you opened the saved file or a preview, open the hosted link in a normal browser tab instead, and check that your internet or VPN is not blocking these sites.');
+}
+async function osrmRoute(a,b){
+  const path=`${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson&alternatives=true`;
+  const servers=['https://router.project-osrm.org/route/v1/driving/','https://routing.openstreetmap.de/routed-car/route/v1/driving/'];
+  let last;
+  for(const base of servers){
+    try{const j=await fetchJSON(base+path,null,20000);if(j.code==='Ok'&&j.routes&&j.routes.length)return j;last=new Error('No driving route found between these places.')}
+    catch(e){last=e}
+  }
+  if(last&&last.message==='No driving route found between these places.')throw last;
+  throw new Error('The routing service is unreachable right now. Check your internet connection and try again in a minute.');
+}
+function thin(coords){const out=coords.map(c=>[c[1],c[0]]),step=Math.ceil(out.length/3000);return step>1?out.filter((_,i)=>i%step===0||i===out.length-1):out}
+async function findRoutes(){
+  const btn=$('#go'),st=$('#status');btn.disabled=true;st.className='hint';st.textContent='Finding places…';
+  try{
+    const a=await geocode($('#fromQ').value.trim()),b=await geocode($('#toQ').value.trim());
+    st.textContent='Finding routes…';
+    const j=await osrmRoute(a,b);
+    S.from=a;S.to=b;S.label=a.name+' – '+b.name;
+    S.routes=j.routes.slice(0,3).map((r,i)=>({name:i===0?'Fastest route':'Alternative '+i,km:r.distance/1000,min:r.duration/60,dense:thin(r.geometry.coordinates)}));
+    if(!S.real){S.acc=S.acc.filter(x=>x.city!==S.label+' (sample)');S.acc=S.acc.concat(sampleRecords(S.label+' (sample)',S.routes,hash(S.label)))}
+    S.routes.forEach(rt=>rt.st=rstats(rt));
+    let best=0;S.routes.forEach((r,i)=>{if(r.st.score<S.routes[best].st.score)best=i});S.sel=best;
+    st.textContent='';$('#fromQ').value=a.name;$('#toQ').value=b.name;
+    renderAll();
+  }catch(e){st.className='err';st.textContent=e.message||'Something went wrong. Check your connection and try again.'}
+  btn.disabled=false;
+}
+function rstats(rt){
+  const la=rt.dense.map(p=>p[0]),lo=rt.dense.map(p=>p[1]),pad=0.05,x0=Math.min(...la)-pad,x1=Math.max(...la)+pad,y0=Math.min(...lo)-pad,y1=Math.max(...lo)+pad;
+  const pool=S.acc.filter(x=>x.lat>=x0&&x.lat<=x1&&x.lon>=y0&&x.lon<=y1);
+  const recs=pool.filter(x=>nearKm(x.lat,x.lon,rt.dense)<=2.5);let w=0,f=0;recs.forEach(x=>{w+=x.sev+1;if(x.sev===2)f++});
+  const score=Math.round(100*(1-Math.exp(-(w/rt.km)/1.6)));
+  const cs=levelize(cells(pool,0.05)),hs=cs.filter(h=>h.lvl!=='low'&&nearKm(h.lat,h.lon,rt.dense)<=3).length;
+  return {score,n:recs.length,f,hs};
+}
+
+/* ---------- plan rendering ---------- */
+let map,layer;
+function renderRoutes(){
+  const rs=S.routes,v=vehById(S.veh);
+  if(!rs.length){$('#routes').innerHTML='<div class="card"><p class="hint">Enter two places and press Find routes.</p></div>';$('#reco').hidden=true;return}
+  let best=0;rs.forEach((r,i)=>{if(r.st.score<rs[best].st.score)best=i});
+  const gap=rs.length>1?Math.max(...rs.map(r=>r.st.score))-Math.min(...rs.map(r=>r.st.score)):0;
+  $('#routes').innerHTML=rs.map((r,i)=>{
+    const b=band(r.st.score),cost=costOf(v,r.km,tollShare()).total,tag=(gap>=5&&i===best)?'<span class="badge">Safer option</span>':'';
+    return `<label class="route"><input type="radio" name="route" value="${i}"${i===S.sel?' checked':''}><span class="rhead"><span class="rname">${esc(r.name)}</span>${tag}</span>
+    <span class="stats"><span><b>${Math.round(r.km)} km</b><span>distance</span></span><span><b>${hm(r.min)}</b><span>est. average time</span></span><span><b>${inr(cost)}</b><span>est. cost</span></span></span>
+    <span class="rl"><span>Risk score ${r.st.score}/100</span><span class="${b.c}">${b.t} (indicative)</span></span><span class="meter"><i class="fl-${b.c}" style="width:${r.st.score}%"></i></span>
+    <span class="small">${r.st.hs} hotspot clusters, ${r.st.n} records near route, ${r.st.f} fatal</span></label>`;
+  }).join('');
+  $$('#routes input').forEach(i=>i.addEventListener('change',()=>{S.sel=+i.value;renderRoutes();drawMap();renderCost();hotIntro()}));
+  const rec=$('#reco');rec.hidden=false;
+  if(rs.length<2)rec.innerHTML='<h3>Only one route returned</h3><p class="small">No alternative was available, so there is nothing to compare for this trip.</p>';
+  else if(gap<5)rec.innerHTML=`<h3>The routes score about the same</h3><p class="small" style="margin-top:6px">Scores differ by ${gap} points, too little to prefer one on risk alone. Compare time and cost instead.</p>`;
+  else{
+    const sf=rs[best],fast=rs[0],dk=Math.round(sf.km-fast.km),dt=Math.round(sf.min-fast.min);
+    rec.innerHTML=best===0?`<h3>Suggested safer route: ${esc(sf.name)}</h3><p style="margin-top:6px">It also has the lowest indicative risk score (${sf.st.score}) of the routes found.</p><p class="small">Indicative only. Drive carefully on any route.</p>`
+      :`<h3>Suggested safer route: ${esc(sf.name)}</h3><p style="margin-top:6px">Indicative risk ${sf.st.score} against ${fast.st.score} on the fastest route. It is ${Math.abs(dk)} km ${dk>=0?'longer':'shorter'} and about ${Math.abs(dt)} min ${dt>=0?'slower':'faster'}.</p><p class="small">Indicative only. Drive carefully on any route.</p>`;
+  }
+}
+function hotIntro(){$('#hotdetail').innerHTML=S.routes.length?`<h3>${esc(S.routes[S.sel].name)} selected</h3><p class="small" style="margin-top:6px">Tap a hotspot circle to see records, peak hours and common vehicles. The thick blue line is the selected route.</p>`:'<h3>Hotspot details</h3><p class="small" style="margin-top:6px">Find a route, then tap a circle on the map.</p>'}
+function showHot(h){
+  const lv={high:'High',mid:'Medium',low:'Lower'}[h.lvl],pc={high:'hi',mid:'md',low:'lo'}[h.lvl],pk=+topKey(h.hr),loc=topKey(h.loc)||h.lat.toFixed(3)+', '+h.lon.toFixed(3);
+  $('#hotdetail').innerHTML=`<h3>${esc(loc)} <span class="pill ${pc}">${lv}</span></h3><dl class="kv"><dt>Records</dt><dd>${h.n}</dd><dt>Fatal</dt><dd>${h.f}</dd><dt>Peak hour</dt><dd>${hh(pk)}–${hh((pk+1)%24)}</dd><dt>Most involved</dt><dd>${esc(topKey(h.veh))}</dd><dt>Road type</dt><dd>${esc(topKey(h.road))}</dd></dl>${S.real?'':'<p class="small">Generated sample data for demonstration.</p>'}`;
+}
+function initMap(){
+  if(!window.L){$('#map').innerHTML='<p class="err" style="padding:16px">The map could not load. Open this page in a normal browser with internet access and reload. Routes, costs, SOS and analytics still work.</p>';return}
+  map=L.map('map',{scrollWheelZoom:false}).setView([13.0,78.8],7);
+  /* Basemaps that need no API key. tile.openstreetmap.org is intentionally NOT used (OSM tile usage policy: https://operations.osmfoundation.org/policies/tiles/). */
+  const esri=(svc,max)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+svc+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:max||19,attribution:'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, USGS, OpenStreetMap contributors'});
+  const base={
+    'Street (Esri)':esri('World_Street_Map'),
+    'Topographic (Esri)':esri('World_Topo_Map'),
+    'Satellite (Esri)':esri('World_Imagery')
+  };
+  base['Street (Esri)'].addTo(map);
+  L.control.layers(base,null,{position:'topright'}).addTo(map);
+  layer=L.layerGroup().addTo(map);
+}
+function drawMap(){
+  if(!map)return;layer.clearLayers();if(!S.routes.length)return;
+  const all=[];
+  S.routes.forEach((r,i)=>{if(i!==S.sel)L.polyline(r.dense,{color:'#6B7C87',weight:4,dashArray:'8 8',opacity:.9}).addTo(layer)});
+  const sel=S.routes[S.sel];L.polyline(sel.dense,{color:'#0B5CAD',weight:6,opacity:.95}).addTo(layer);
+  S.routes.forEach(r=>r.dense.forEach(p=>all.push(p)));
+  const la=all.map(p=>p[0]),lo=all.map(p=>p[1]),pad=0.05,x0=Math.min(...la)-pad,x1=Math.max(...la)+pad,y0=Math.min(...lo)-pad,y1=Math.max(...lo)+pad;
+  const pool=S.acc.filter(x=>x.lat>=x0&&x.lat<=x1&&x.lon>=y0&&x.lon<=y1),cs=levelize(cells(pool,0.05));
+  cs.forEach(h=>{
+    const col=h.lvl==='high'?'#C5352B':(h.lvl==='mid'?'#E09F1F':'#23804F');
+    const c=L.circle([h.lat,h.lon],{radius:1500+3500*Math.sqrt(h.q),color:col,weight:2,fillColor:col,fillOpacity:.45}).addTo(layer);
+    c.on('click',()=>showHot(h));
+  });
+  L.circleMarker([S.from.lat,S.from.lon],{radius:9,color:'#13222B',weight:3,fillColor:'#F2B705',fillOpacity:1}).bindTooltip('Start: '+S.from.name).addTo(layer);
+  L.circleMarker([S.to.lat,S.to.lon],{radius:9,color:'#13222B',weight:3,fillColor:'#F2B705',fillOpacity:1}).bindTooltip('End: '+S.to.name).addTo(layer);
+  map.invalidateSize();map.fitBounds(L.latLngBounds(all),{padding:[24,24]});
+}
+
+/* ---------- cost ---------- */
+function setVeh(id){S.veh=id;$('#veh').value=id;$('#vehPlan').value=id;syncCostInputs();renderRoutes();renderCost()}
+function syncCostInputs(){const v=vehById(S.veh),o=S.ov[v.id]||{};$('#eff').value=o.eff!=null?o.eff:v.eff;$('#tollRate').value=o.toll!=null?o.toll:v.toll;$('#effL').textContent=(v.en==='elec'?'Efficiency':'Mileage')+' ('+unit(v)+')'}
+function initCost(){
+  fillSelect($('#veh'),VEH.map(v=>[v.id,v.name]),S.veh);fillSelect($('#vehPlan'),VEH.map(v=>[v.id,v.name]),S.veh);
+  $('#veh').addEventListener('change',e=>setVeh(e.target.value));$('#vehPlan').addEventListener('change',e=>setVeh(e.target.value));
+  $('#costRoute').addEventListener('change',e=>{S.sel=+e.target.value;renderRoutes();drawMap();renderCost();hotIntro()});
+  const onNum=(id,fn)=>$(id).addEventListener('input',e=>{const n=parseFloat(e.target.value);if(!isNaN(n)){fn(n);renderRoutes();renderCost()}});
+  [['petrol','#pPetrol'],['diesel','#pDiesel'],['elec','#pElec']].forEach(([k,id])=>{$(id).value=S.price[k];onNum(id,n=>{if(n>=0)S.price[k]=n})});
+  onNum('#eff',n=>{if(n>0)(S.ov[S.veh]=S.ov[S.veh]||{}).eff=n});onNum('#tollRate',n=>{if(n>=0)(S.ov[S.veh]=S.ov[S.veh]||{}).toll=n});
+  $('#dist').addEventListener('input',renderCost);$('#tollShare').addEventListener('input',()=>{renderRoutes();renderCost()});
+  syncCostInputs();
+}
+function renderCost(){
+  const rs=S.routes;
+  $('#costRoute').innerHTML=rs.length?rs.map((x,i)=>`<option value="${i}"${i===S.sel?' selected':''}>${esc(x.name)} (${Math.round(x.km)} km)</option>`).join(''):'<option>No route yet. Using distance below.</option>';
+  const active=document.activeElement;if(rs.length&&active!==$('#dist'))$('#dist').value=Math.round(rs[S.sel].km);
+  const km=parseFloat($('#dist').value)||0,share=tollShare(),v=vehById(S.veh),c=costOf(v,km,share),label=v.en==='elec'?'Electricity':(v.en==='diesel'?'Diesel':'Petrol'),qty=(km/c.eff).toFixed(1)+(v.en==='elec'?' kWh':' l');
+  $('#costOut').innerHTML=`<div class="lbl">Estimated total</div><div class="big">${inr(c.total)}</div><p class="small">${Math.round(km)} km${rs.length?', '+hm(rs[S.sel].min)+' average time':''}</p><div class="brk"><span>${label} (${qty} at ₹${c.price})</span><span class="v">${inr(c.energy)}</span><span>Toll (${Math.round(share*100)}% tolled at ₹${c.tr}/km)</span><span class="v">${inr(c.toll)}</span><span>Per km</span><span class="v">₹${km?(c.total/km).toFixed(2):'0.00'}</span></div>`;
+  $('#costTable').innerHTML='<thead><tr><th>Vehicle</th><th class="n">Energy</th><th class="n">Toll</th><th class="n">Total</th></tr></thead><tbody>'+VEH.map(x=>{const k=costOf(x,km,share);return `<tr${x.id===v.id?' class="sel"':''}><td>${esc(x.name)}</td><td class="n">${inr(k.energy)}</td><td class="n">${inr(k.toll)}</td><td class="n">${inr(k.total)}</td></tr>`}).join('')+'</tbody>';
+}
+
+/* ---------- nearby services (OpenStreetMap via Overpass) ---------- */
+const STYPES=[{id:'hospital',label:'Hospital',ic:'H',q:'["amenity"="hospital"]'},{id:'medical',label:'Medical store',ic:'+',q:'["amenity"="pharmacy"]'},{id:'police',label:'Police station',ic:'P',q:'["amenity"="police"]'},{id:'petrol',label:'Petrol bunk',ic:'F',q:'["amenity"="fuel"]'},{id:'tyre',label:'Tyre mechanic',ic:'T',q:'["shop"="tyres"]'}];
+let myPos=null;
+function whereOptions(){const o=[];if(S.from){const mid=S.routes.length?S.routes[S.sel].dense[Math.floor(S.routes[S.sel].dense.length/2)]:null;o.push(['from','Start: '+S.from.name]);if(mid)o.push(['mid','Midpoint of selected route']);o.push(['to','Destination: '+S.to.name])}o.push(['me','My location (asks first)']);return o}
+function centerFor(k){if(k==='from')return S.from;if(k==='to')return S.to;if(k==='mid'){const d=S.routes[S.sel].dense,p=d[Math.floor(d.length/2)];return {lat:p[0],lon:p[1],name:'route midpoint'}}return myPos}
+function askLocation(boxSel,then){
+  const box=$(boxSel);
+  box.innerHTML='<div class="disc"><p style="margin-bottom:10px"><b>Allow this page to read your location once?</b></p><div class="row"><button class="btn pri sm" data-y="1" type="button">Yes, read my location</button><button class="btn sm" data-n="1" type="button">Cancel</button></div></div>';
+  $('[data-n]',box).onclick=()=>box.innerHTML='';
+  $('[data-y]',box).onclick=()=>{
+    box.innerHTML='<p class="hint">Reading location…</p>';
+    if(!navigator.geolocation){box.innerHTML='<p class="err">Location is not available on this device.</p>';return}
+    navigator.geolocation.getCurrentPosition(p=>{myPos={lat:p.coords.latitude,lon:p.coords.longitude,name:'your location'};box.innerHTML='';then()},()=>{box.innerHTML='<p class="err">Location could not be read. Allow location for this site in your browser, or pick another place.</p>'},{timeout:10000});
+  };
+}
+async function loadServices(c,radius,types,out){
+  out.innerHTML='<p class="hint">Searching OpenStreetMap…</p>';
+  const parts=STYPES.filter(t=>types[t.id]).map(t=>`nwr(around:${radius},${c.lat},${c.lon})${t.q};`).join('');
+  if(!parts){out.innerHTML='<p class="hint">Select at least one service type.</p>';return}
+  try{
+    const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(`[out:json][timeout:25];(${parts});out center tags 120;`),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+    const j=await r.json(),items=[];
+    j.elements.forEach(e=>{
+      const t=STYPES.find(t=>{const m=t.q.match(/"([^"]+)"="([^"]+)"/);return e.tags&&e.tags[m[1]]===m[2]});if(!t)return;
+      const la=e.lat!=null?e.lat:(e.center&&e.center.lat),lo=e.lon!=null?e.lon:(e.center&&e.center.lon);if(la==null)return;
+      items.push({t,name:e.tags.name||'Unnamed '+t.label.toLowerCase(),d:hav(c.lat,c.lon,la,lo),phone:e.tags.phone||e.tags['contact:phone']||null,la,lo});
+    });
+    items.sort((a,b)=>a.d-b.d);
+    out.innerHTML=items.length?items.slice(0,40).map(s=>`<div class="svc"><span class="ic t-${s.t.id}" aria-hidden="true">${s.t.ic}</span><div><b>${esc(s.name)}</b><span class="hint">${esc(s.t.label)}</span><span class="hint" style="display:block">Contact: ${s.phone?esc(s.phone):'not listed in map data'}</span><a class="hint" href="https://www.openstreetmap.org/?mlat=${s.la}&mlon=${s.lo}#map=17/${s.la}/${s.lo}" target="_blank" rel="noopener">Open on map</a></div><span class="d">${s.d.toFixed(1)} km</span></div>`).join(''):'<p class="hint">Nothing found in this radius. Try a larger radius.</p>';
+  }catch(e){out.innerHTML='<p class="err">The places service did not respond. Wait a moment and try again.</p>'}
+}
+function initNearby(){
+  $('#types').innerHTML=STYPES.map(t=>`<button class="chip" type="button" data-t="${t.id}" aria-pressed="true">${esc(t.label)}</button>`).join('');
+  $$('#types .chip').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.t;S.types[id]=S.types[id]?0:1;b.setAttribute('aria-pressed',S.types[id]?'true':'false')}));
+  $('#svcGo').addEventListener('click',()=>{
+    const k=$('#svcWhere').value,go=()=>{const c=centerFor(k);$('#svcTitle').textContent='Near '+c.name;loadServices(c,+$('#svcR').value,S.types,$('#svcList'))};
+    if(k==='me'&&!myPos)askLocation('#svcLoc',go);else go();
+  });
+  $('#sosGo').addEventListener('click',()=>{
+    const k=$('#sosWhere').value,go=()=>{loadServices(centerFor(k),5000,{hospital:1,police:1},$('#sosSvc'))};
+    if(k==='me'&&!myPos)askLocation('#sosSvc',go);else go();
+  });
+}
+function renderWhere(){const o=whereOptions();fillSelect($('#svcWhere'),o,o[0][0]);fillSelect($('#sosWhere'),o,o[0][0])}
+
+/* ---------- SOS ---------- */
+const NUMS=[['112','National emergency number'],['108','Ambulance and medical emergency (most states)'],['100','Police'],['101','Fire'],['1033','National highway helpline']];
+const CHECKS=['Move to a safe place away from traffic and switch on hazard lights.','Call 112 or 108 and say where you are, using a landmark or kilometre marker.','Do not move a seriously injured person unless there is fire or immediate danger.','Press firmly on bleeding with a clean cloth. Keep the person warm and talking.','Give nothing to eat or drink to an injured person.','Note vehicle numbers and take photos only if it is safe.','Stay on the line until the operator ends the call.','Bystanders who help in good faith are protected under India’s Good Samaritan provisions.'];
+function initSos(){
+  $('#nums').innerHTML=NUMS.map(n=>`<div class="num"><span class="n112">${n[0]}</span><span>${esc(n[1])}</span><button class="btn sos sm" type="button" data-call="${n[0]}">Call</button><div class="cf" hidden></div></div>`).join('');
+  $('#nums').addEventListener('click',e=>{
+    const b=e.target.closest('[data-call]'),x=e.target.closest('[data-cancel]'),d=e.target.closest('[data-dial]');
+    if(b){const cf=$('.cf',b.closest('.num'));cf.hidden=false;cf.innerHTML=`<p style="margin-bottom:10px"><b>Open your phone dialer for ${b.dataset.call}?</b></p><div class="row"><a class="btn sos sm" data-dial="1" href="tel:${b.dataset.call}">Yes, open dialer</a><button class="btn sm" type="button" data-cancel="1">Cancel</button></div>`}
+    if(x){const c=x.closest('.cf');c.hidden=true;c.innerHTML=''}
+    if(d){const c=d.closest('.cf');if(!$('.small',c)){const p=document.createElement('p');p.className='small';p.textContent='If your dialer did not open, dial '+d.getAttribute('href').slice(4)+' by hand.';c.appendChild(p)}}
+  });
+  $('#checks').innerHTML=CHECKS.map((t,i)=>`<label class="check"><input type="checkbox" id="ck${i}"><span>${esc(t)}</span></label>`).join('');
+  locStep('idle');
+}
+function locStep(s,data){
+  const box=$('#locBox');
+  if(s==='idle'){box.innerHTML='<p style="margin-bottom:12px">Create a message with your location to send to family or a responder. Your location is read only after you confirm, and nothing is sent automatically.</p><button class="btn pri" id="locAsk" type="button">Share my location</button>';$('#locAsk').onclick=()=>locStep('confirm')}
+  else if(s==='confirm'){
+    box.innerHTML='<p style="margin-bottom:12px"><b>Allow this page to read your location once?</b> You then choose where to send the message.</p><div class="row"><button class="btn pri" id="locYes" type="button">Yes, read my location</button><button class="btn" id="locNo" type="button">Cancel</button></div>';
+    $('#locNo').onclick=()=>locStep('idle');
+    $('#locYes').onclick=()=>{
+      box.innerHTML='<p>Reading location…</p>';
+      if(!navigator.geolocation){locStep('manual','Location is not available on this device.');return}
+      navigator.geolocation.getCurrentPosition(p=>locStep('done',{la:p.coords.latitude,lo:p.coords.longitude,acc:Math.round(p.coords.accuracy)}),()=>locStep('manual','Location could not be read.'),{timeout:10000,maximumAge:0});
+    };
+  }else if(s==='manual'){
+    box.innerHTML=`<p style="margin-bottom:10px">${esc(data)} Type where you are and the message will be written for you.</p><div class="field"><label for="manLoc">Landmark, road or kilometre marker</label><input id="manLoc" type="text" placeholder="e.g. NH48 near Vellore toll plaza"></div><div class="row"><button class="btn pri" id="manGo" type="button">Create message</button><button class="btn" id="manBack" type="button">Back</button></div>`;
+    $('#manBack').onclick=()=>locStep('idle');$('#manGo').onclick=()=>{const v=$('#manLoc').value.trim();if(v)locStep('done',{text:v})};
+  }else{
+    const msg='I need help. My location: '+(data.text?data.text:`https://maps.google.com/?q=${data.la.toFixed(5)},${data.lo.toFixed(5)} (accuracy about ${data.acc} m)`)+'. Sent from Suraksha Yatra.';
+    box.innerHTML=`<p style="margin-bottom:10px">Message ready. Copy it and paste it into your messaging app.</p><div class="msgbox" id="msgBox">${esc(msg)}</div><div class="row" style="margin-top:12px"><button class="btn pri" id="msgCopy" type="button">Copy message</button><button class="btn" id="msgDone" type="button">Start over</button></div>`;
+    $('#msgCopy').onclick=function(){copyText(msg,$('#msgBox'),this)};$('#msgDone').onclick=()=>locStep('idle');
+  }
+}
+
+/* ---------- accident CSV ---------- */
+function parseCSV(t){
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===','){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';if(row.some(x=>x.trim()))rows.push(row);row=[]}else f+=c}
+  row.push(f);if(row.some(x=>x.trim()))rows.push(row);return rows;
+}
+function mapVeh(s){s=(s||'').toLowerCase();if(/two|2w|bike|motorcycle|scooter|moped/.test(s))return 'Two-wheeler';if(/three|3w|auto|rickshaw/.test(s))return 'Three-wheeler';if(/bus/.test(s))return 'Bus';if(/truck|lorry|heavy|goods|tractor|trailer/.test(s))return 'Heavy vehicle';if(/car|jeep|van|taxi|suv|four|4w/.test(s))return 'Car';return 'Other'}
+function mapRoad(s){s=(s||'').toLowerCase();if(/\bnh\b|national/.test(s))return 'National Highway';if(/\bsh\b|state/.test(s))return 'State Highway';if(/urban|city|town|municipal/.test(s))return 'Urban road';if(/ghat|bypass|hill/.test(s))return 'Ghat / bypass';return 'Other'}
+function loadCSVText(text,name){
+  const rows=parseCSV(text);if(rows.length<2)throw new Error('The file has no data rows.');
+  const h=rows[0].map(x=>x.trim().toLowerCase()),ix=names=>h.findIndex(x=>names.includes(x));
+  const iLa=ix(['lat','latitude']),iLo=ix(['lon','lng','long','longitude']),iH=ix(['hour']),iT=ix(['time','datetime','date_time','timestamp']),iS=ix(['severity','injury','outcome']),iV=ix(['vehicle','vehicle_type']),iR=ix(['road_type','road','roadtype']),iC=ix(['city','district']),iL=ix(['location','name','place']);
+  if(iLa<0||iLo<0)throw new Error('Needs lat and lon columns.');
+  const out=[];
+  rows.slice(1).forEach(r=>{
+    const la=parseFloat(r[iLa]),lo=parseFloat(r[iLo]);if(isNaN(la)||isNaN(lo))return;
+    let hr=iH>=0?parseInt(r[iH],10):NaN;if(isNaN(hr)&&iT>=0){const m=(r[iT]||'').match(/(\d{1,2}):\d{2}/);if(m)hr=+m[1]}if(isNaN(hr)||hr<0||hr>23)hr=12;
+    const s=(iS>=0?r[iS]:'').toLowerCase(),sev=/fatal|kill|death|dead|^3$/.test(s)?2:(/grievous|serious|major|^2$/.test(s)?1:0);
+    out.push({lat:la,lon:lo,hour:hr,sev,veh:mapVeh(iV>=0?r[iV]:''),road:mapRoad(iR>=0?r[iR]:''),city:(iC>=0&&r[iC]&&r[iC].trim())||'All records',loc:iL>=0?(r[iL]||'').trim():'',sample:false});
+  });
+  if(!out.length)throw new Error('No rows with valid coordinates were found.');
+  S.acc=out;S.real=true;S.fileName=name;
+}
+function afterData(){
+  banner();refreshAnalyticsFilters();renderAnalytics();
+  if(S.routes.length){S.routes.forEach(rt=>rt.st=rstats(rt));let b=0;S.routes.forEach((r,i)=>{if(r.st.score<S.routes[b].st.score)b=i});S.sel=b;renderRoutes();drawMap();renderCost();hotIntro()}
+}
+function banner(){
+  $('#banner').innerHTML=S.real?`<b>Using ${S.acc.length.toLocaleString('en-IN')} accident records from ${esc(S.fileName)}.</b> Risk scores are indicative and do not guarantee road safety. Times are estimated averages, not live traffic.`
+    :'<b>Accident data shown is generated sample data.</b> Load a real accident CSV in the Analytics tab to replace it. Risk scores are indicative and do not guarantee road safety. Times are estimated averages, not live traffic.';
+}
+
+/* ---------- analytics ---------- */
+const TODS=[['all','All day'],['morning','Morning 05:00–11:59'],['afternoon','Afternoon 12:00–16:59'],['evening','Evening 17:00–20:59'],['night','Night 21:00–04:59']];
+const inTod=(h,t)=>t==='all'||(t==='morning'&&h>=5&&h<12)||(t==='afternoon'&&h>=12&&h<17)||(t==='evening'&&h>=17&&h<21)||(t==='night'&&(h>=21||h<5));
+function refreshAnalyticsFilters(){
+  const cities=[...new Set(S.acc.map(x=>x.city))].sort(),cur=$('#aCorr').value;
+  fillSelect($('#aCorr'),[['all','All cities']].concat(cities.map(c=>[c,c])),cities.includes(cur)?cur:'all');
+}
+function initAnalytics(){
+  fillSelect($('#aTod'),TODS,'all');fillSelect($('#aVeh'),[['all','All vehicles']].concat(VEHT.map(v=>[v,v])),'all');refreshAnalyticsFilters();
+  ['#aCorr','#aTod','#aVeh'].forEach(id=>$(id).addEventListener('change',renderAnalytics));
+  $('#csv').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+    rd.onload=()=>{try{loadCSVText(String(rd.result),f.name);$('#csvMsg').className='hint';$('#csvMsg').textContent='Loaded '+S.acc.length.toLocaleString('en-IN')+' records from '+f.name+'.';afterData()}catch(err){$('#csvMsg').className='err';$('#csvMsg').textContent=err.message}};
+    rd.readAsText(f);
+  });
+}
+function barsH(el,rows,max){let h='';rows.forEach((r,i)=>{const y=10+i*36,w=max?(480-118-44)*r[1]/max:0;h+=`<text x="110" y="${y+16}" text-anchor="end" style="fill:var(--ink);font:12px var(--body)">${esc(r[0])}</text><rect x="118" y="${y}" width="${Math.max(w,1).toFixed(1)}" height="24" rx="3" fill="var(--accent)"/><text x="${(118+w+6).toFixed(1)}" y="${y+16}">${r[1]}</text>`});el.innerHTML=h}
+function renderAnalytics(){
+  const c=$('#aCorr').value,t=$('#aTod').value,v=$('#aVeh').value;
+  const recs=S.acc.filter(x=>(c==='all'||x.city===c)&&inTod(x.hour,t)&&(v==='all'||x.veh===v));
+  const fatal=recs.filter(x=>x.sev===2).length,night=recs.filter(x=>x.hour>=21||x.hour<5).length;
+  $('#kpis').innerHTML=`<div class="card"><b>${recs.length.toLocaleString('en-IN')}</b><span>${S.real?'records':'sample records'}</span></div><div class="card"><b>${recs.length?Math.round(fatal/recs.length*100):0}%</b><span>fatal (${fatal})</span></div><div class="card"><b>${recs.length?Math.round(night/recs.length*100):0}%</b><span>at night, 21:00–05:00</span></div>`;
+  const hrs=Array(24).fill(0);recs.forEach(x=>hrs[x.hour]++);
+  const mx=Math.max(1,...hrs),pk=hrs.indexOf(Math.max(...hrs)),Wd=480,Ht=220,L=34,B=24,T=14,bw=(Wd-L-6)/24;let hs='';
+  [0,0.5,1].forEach(f=>{const y=T+(Ht-T-B)*(1-f);hs+=`<line class="gl" x1="${L}" x2="${Wd-6}" y1="${y}" y2="${y}"/><text x="${L-5}" y="${y+4}" text-anchor="end">${Math.round(mx*f)}</text>`});
+  hrs.forEach((n,i)=>{const bh=(Ht-T-B)*n/mx,x=L+i*bw+1;hs+=`<rect x="${x.toFixed(1)}" y="${(Ht-B-bh).toFixed(1)}" width="${(bw-2).toFixed(1)}" height="${bh.toFixed(1)}" fill="${i===pk&&n>0?'var(--mile)':'var(--accent)'}"><title>${hh(i)}: ${n}</title></rect>`;if(i%3===0)hs+=`<text x="${(x+bw/2-1).toFixed(1)}" y="${Ht-8}" text-anchor="middle">${i<10?'0':''}${i}</text>`});
+  if(recs.length)hs+=`<text x="${Wd-6}" y="10" text-anchor="end" style="fill:var(--ink)">Peak ${hh(pk)} (${hrs[pk]})</text>`;
+  $('#hourChart').innerHTML=hs;
+  const rc=ROADS.map(r=>[r,recs.filter(x=>x.road===r).length]).filter(r=>r[1]>0||r[0]!=='Other');
+  barsH($('#roadChart'),rc,Math.max(1,...rc.map(r=>r[1])));
+  const top=cells(recs,0.05).sort((a,b)=>b.w-a.w).slice(0,10),mw=top.length?top[0].w:1;
+  $('#topTable').innerHTML='<thead><tr><th>#</th><th>Location</th><th class="n">Records</th><th class="n">Fatal</th><th>Peak hour</th><th>Level</th></tr></thead><tbody>'+(top.length?top.map((h,i)=>{const q=h.w/mw,lv=q>=0.6?['High','hi']:(q>=0.3?['Medium','md']:['Lower','lo']),loc=topKey(h.loc)||h.lat.toFixed(3)+', '+h.lon.toFixed(3);return `<tr><td>${i+1}</td><td>${esc(loc)}</td><td class="n">${h.n}</td><td class="n">${h.f}</td><td>${hh(+topKey(h.hr))}</td><td><span class="pill ${lv[1]}">${lv[0]}</span></td></tr>`}).join(''):'<tr><td colspan="6">No records match these filters.</td></tr>')+'</tbody>';
+}
+
+/* ---------- tabs and boot ---------- */
+const TABS=['plan','cost','nearby','sos','analytics'];
+function showTab(){
+  let h=location.hash.slice(1);if(!TABS.includes(h))h='plan';
+  TABS.forEach(t=>$('#tab-'+t).hidden=t!==h);
+  $$('.tabs a').forEach(a=>a.getAttribute('href')==='#'+h?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
+  if(h==='plan'&&map)setTimeout(()=>{map.invalidateSize();if(S.routes.length)drawMap()},50);
+  window.scrollTo(0,0);
+}
+function renderAll(){renderRoutes();drawMap();renderCost();renderWhere();hotIntro()}
+initMap();initCost();initNearby();initSos();initAnalytics();banner();renderAll();renderAnalytics();
+$('#go').addEventListener('click',findRoutes);
+['#fromQ','#toQ'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')findRoutes()}));
+addEventListener('hashchange',showTab);showTab();
+fetch('accidents.csv').then(r=>r.ok?r.text():Promise.reject()).then(t=>{loadCSVText(t,'accidents.csv');afterData()}).catch(()=>{});
+})();
+});
+</script>
+</body>
+</html>
